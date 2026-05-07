@@ -1,0 +1,25 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+}
+
+/* Reviews strip infinite scroll */
+@keyframes scroll-reviews {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.reviews-track {
+    animation: scroll-reviews 40s linear infinite;
+    will-change: transform;
+}
+
+.reviews-track:hover {
+    animation-play-state: paused;
+}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Awesome Karts{% endblock %}
+
+{% block content %}
+
+<section class="flex flex-col items-center justify-center text-center min-h-[62vh] px-6">
+    <h1 class="text-7xl font-extrabold text-white tracking-tight mb-4">Book Your Race</h1>
+    <p class="text-ak-muted text-lg mb-8 leading-relaxed">
+        The fastest karts in town. Book your session online,<br>and hit the track today!
+    </p>
+    <a href="/bookings"
+       class="inline-flex items-center gap-2 bg-ak-purple text-white font-semibold px-8 py-3 rounded-lg hover:bg-purple-600 transition-colors text-base">
+        Book Now <span aria-hidden="true">→</span>
+    </a>
+</section>
+
+<div class="overflow-hidden py-4 border-y border-ak-border">
+    <div class="reviews-track flex gap-4" style="width: max-content;">
+        {% set reviews = [
+            ("Most fun I have had in years! This is awesome!", "Johnathan", "21/08/2026"),
+            ("Absolutely incredible experience, will be back!", "Sarah", "14/08/2026"),
+            ("Best karting track in Newcastle by far!", "Marcus", "07/08/2026"),
+            ("My kids had the best time. Highly recommend!", "Claire", "02/08/2026"),
+            ("Fast karts, great track layout, friendly staff.", "Daniel", "28/07/2026"),
+            ("Came for a birthday and everyone loved it!", "Priya", "20/07/2026"),
+            ("The track is huge and the karts are so quick!", "Tyler", "15/07/2026"),
+            ("Perfect afternoon out. Already booked again.", "Emma", "10/07/2026")
+        ] %}
+        {% for text, name, date in reviews * 2 %}
+        <div class="bg-ak-card border border-ak-border rounded-xl p-5 shrink-0 w-64">
+            <p class="text-white text-sm leading-relaxed mb-4">{{ text }}</p>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-ak-border flex items-center justify-center shrink-0">
+                    <span class="text-ak-muted text-xs font-semibold">{{ name[0] }}</span>
+                </div>
+                <div>
+                    <p class="text-white text-sm font-medium leading-none mb-1">{{ name }}</p>
+                    <p class="text-ak-hint text-xs">{{ date }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<section class="max-w-6xl mx-auto px-6 py-14">
+    <h2 class="text-3xl font-bold text-white mb-6">Everything you need</h2>
+    <div class="grid grid-cols-2 gap-4">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col">
+            <div class="w-8 h-0.5 bg-ak-purple mb-5"></div>
+            <h3 class="text-white font-bold text-xl mb-2">Online Bookings</h3>
+            <p class="text-ak-muted text-sm leading-relaxed mb-8">
+                Select your package, pick a date and time, and pay securely.
+            </p>
+            <a href="/bookings"
+               class="mt-auto inline-flex items-center gap-1 text-ak-purple text-sm font-medium hover:text-purple-400 transition-colors">
+                Book a Session <span aria-hidden="true">→</span>
+            </a>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col">
+            <div class="w-8 h-0.5 bg-ak-purple mb-5"></div>
+            <h3 class="text-white font-bold text-xl mb-2">Digital Waivers</h3>
+            <p class="text-ak-muted text-sm leading-relaxed mb-8">
+                Complete your waiver online before you arrive.
+            </p>
+            <a href="/login"
+               class="mt-auto inline-flex items-center gap-1 text-ak-purple text-sm font-medium hover:text-purple-400 transition-colors">
+                Sign Your Waiver <span aria-hidden="true">→</span>
+            </a>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

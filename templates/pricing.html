@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Pricing &amp; Opening Hours - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+    <h1 class="text-4xl font-bold text-white mb-2">Pricing &amp; Opening Hours</h1>
+    <p class="text-ak-muted text-sm mb-10">Choose your package and plan your visit.</p>
+
+    <h2 class="text-xl font-bold text-white mb-1">Packages</h2>
+    <p class="text-ak-muted text-sm mb-6">Every package shows your saving up front.</p>
+
+    <div class="grid grid-cols-4 gap-4 mb-8">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
+            <p class="text-white font-bold text-2xl mb-1">1 Session</p>
+            <p class="text-ak-muted text-sm mb-4">1× 13 Minute Run</p>
+            <p class="text-white font-bold text-3xl mt-auto">$37.50</p>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
+            <p class="text-white font-bold text-2xl mb-1">2 Sessions</p>
+            <p class="text-ak-muted text-sm mb-4">2× 13 Minute Run</p>
+            <div class="flex items-center gap-2 mt-auto">
+                <p class="text-white font-bold text-3xl">$65.00</p>
+                <span class="bg-purple-900 text-ak-purple text-xs font-semibold px-2 py-0.5 rounded">- 13%</span>
+            </div>
+        </div>
+
+        <div class="bg-ak-card border border-ak-purple rounded-xl overflow-hidden flex flex-col">
+            <div class="bg-ak-purple text-white text-xs font-bold text-center py-1.5 tracking-wide">
+                Best Value
+            </div>
+            <div class="p-6 flex flex-col flex-1">
+                <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
+                <p class="text-white font-bold text-2xl mb-1">3 Sessions</p>
+                <p class="text-ak-muted text-sm mb-4">3× 13 Minute Run</p>
+                <div class="flex items-center gap-2 mt-auto">
+                    <p class="text-white font-bold text-3xl">$85.00</p>
+                    <span class="bg-purple-900 text-ak-purple text-xs font-semibold px-2 py-0.5 rounded">- 24%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
+            <p class="text-white font-bold text-2xl mb-1">4+ Sessions</p>
+            <p class="text-ak-muted text-sm mb-4">4 Or More 13 Minute Runs</p>
+            <p class="text-white font-bold text-2xl mt-auto">$105+ $20/Ride</p>
+        </div>
+
+    </div>
+
+    <div class="border-l-4 border-ak-purple bg-ak-card rounded-r-xl px-6 py-4 mb-12">
+        <p class="text-ak-muted text-sm">Need help? Call us during business hours.</p>
+    </div>
+
+    <h2 class="text-2xl font-bold text-white mb-1">Opening Hours</h2>
+    <p class="text-ak-muted text-sm mb-6">Make a booking to reserve your slot!</p>
+
+    <div class="border border-ak-border rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-ak-card border-b border-ak-border">
+                    <th class="text-left text-white font-semibold px-6 py-4 w-1/2">Day</th>
+                    <th class="text-left text-white font-semibold px-6 py-4">Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-ak-border">
+                    <td class="text-white px-6 py-4">Monday - Friday</td>
+                    <td class="text-ak-purple px-6 py-4">10:00 AM - 8:00 PM</td>
+                </tr>
+                <tr class="border-b border-ak-border bg-ak-card bg-opacity-50">
+                    <td class="text-white px-6 py-4">Saturday</td>
+                    <td class="text-ak-purple px-6 py-4">9:00 AM - 9:00 PM</td>
+                </tr>
+                <tr class="border-b border-ak-border">
+                    <td class="text-white px-6 py-4">Sunday</td>
+                    <td class="text-ak-purple px-6 py-4">9:00 AM - 7:00 PM</td>
+                </tr>
+                <tr class="border-b border-ak-border bg-ak-card bg-opacity-50">
+                    <td class="text-white px-6 py-4">Public Holidays</td>
+                    <td class="text-ak-purple px-6 py-4">10:00 AM - 5:00 PM</td>
+                </tr>
+                <tr>
+                    <td class="text-white px-6 py-4">School Holidays</td>
+                    <td class="text-ak-purple px-6 py-4">9:00 AM - usual close</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

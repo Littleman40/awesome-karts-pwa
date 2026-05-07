@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Contact Us - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+    <h1 class="text-4xl font-bold text-white mb-2">Contact Us</h1>
+    <p class="text-ak-muted text-sm mb-10">Have any questions? Contact us at any time!</p>
+
+    <div class="grid grid-cols-2 gap-4">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8">
+            <form onsubmit="handleContactSubmit(event)" class="space-y-5">
+                <div>
+                    <label class="block text-white text-sm font-medium mb-1.5">Name</label>
+                    <input type="text" placeholder="Value"
+                           class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label class="block text-white text-sm font-medium mb-1.5">Surname</label>
+                    <input type="text" placeholder="Value"
+                           class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label class="block text-white text-sm font-medium mb-1.5">Email</label>
+                    <input type="email" placeholder="Value"
+                           class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label class="block text-white text-sm font-medium mb-1.5">Message</label>
+                    <textarea placeholder="Value" rows="5"
+                              class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors resize-none"></textarea>
+                </div>
+                <button type="submit"
+                        class="w-full bg-ak-border hover:bg-neutral-700 text-white font-medium text-sm py-3 rounded-lg transition-colors">
+                    Submit
+                </button>
+                <div id="contact-success" class="hidden text-ak-purple text-sm text-center">
+                    Thanks for your message! We'll be in touch soon.
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col gap-6">
+            <div>
+                <p class="text-white font-semibold text-sm mb-1">Email:</p>
+                <p class="text-ak-muted text-sm">hello@awesomekarts.com.au</p>
+            </div>
+            <div>
+                <p class="text-white font-semibold text-sm mb-1">Phone Number:</p>
+                <p class="text-ak-muted text-sm">0491 120 000</p>
+            </div>
+            <div>
+                <p class="text-white font-semibold text-sm mb-1">Address</p>
+                <p class="text-ak-muted text-sm">123 Raceway Drive, Newcastle</p>
+            </div>
+            <div class="flex-1">
+                <p class="text-white font-semibold text-sm mb-3">Google Maps Embed:</p>
+                <div class="bg-ak-border rounded-lg flex items-center justify-center min-h-[180px]">
+                    <p class="text-ak-hint text-sm">Embed Of Google Maps Store Location</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function handleContactSubmit(e) {
+    e.preventDefault();
+    document.getElementById('contact-success').classList.remove('hidden');
+    e.target.reset();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Log In / Register - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center px-6 py-24">
+    <h1 class="text-3xl font-bold text-white mb-8">Log In / Register</h1>
+    <div class="bg-ak-card border border-ak-border rounded-xl p-8 w-full max-w-md">
+        <div class="space-y-5">
+            <div>
+                <label class="block text-white text-sm font-medium mb-1.5">Email</label>
+                <input type="email" placeholder="Value"
+                       class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+            </div>
+            <div>
+                <label class="block text-white text-sm font-medium mb-1.5">Password</label>
+                <input type="password" placeholder="Value"
+                       class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+            </div>
+            <button type="button"
+                    class="w-full bg-ak-border hover:bg-neutral-700 text-white font-medium text-sm py-3 rounded-lg transition-colors">
+                Sign In
+            </button>
+            <div class="text-center">
+                <a href="#" class="text-ak-muted text-sm hover:text-white underline transition-colors">Forgot password?</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

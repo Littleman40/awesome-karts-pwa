@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>{% block title %}Awesome Karts{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <link rel="apple-touch-icon" href="/static/icons/icon-dark-2000.png">
+    <link rel="icon" type="image/png" href="/static/icons/icon-light-2000.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" href="/static/icons/icon-dark-2000.png" media="(prefers-color-scheme: light)">
+    
+    <meta name="theme-color" content="#A855F7">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ak-bg':     '#000000',
+                        'ak-card':   '#161616',
+                        'ak-border': '#1F1F1F',
+                        'ak-purple': '#A855F7',
+                        'ak-muted':  '#A0A0A0',
+                        'ak-hint':   '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-ak-bg text-white font-sans min-h-screen flex flex-col">
+
+    <!-- nav -->
+    <nav class="sticky top-0 z-50 bg-ak-bg border-b border-ak-border">
+        <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+            <a href="/" class="text-white font-bold text-lg tracking-tight shrink-0">Awesome Karts</a>
+
+            <div class="flex items-center gap-6">
+                <a href="/"
+                   class="text-sm transition-colors {% if request.endpoint == 'home' %} text-white border-b-2 border-ak-purple pb-px {% else %} text-ak-muted hover:text-white {% endif %}">
+                    Home
+                </a>
+                <a href="/pricing"
+                   class="text-sm transition-colors {% if request.endpoint == 'pricing' %}text-white border-b-2 border-ak-purple pb-px{% else %}text-ak-muted hover:text-white{% endif %}">
+                    Pricing &amp; Hours
+                </a>
+                <a href="/track"
+                   class="text-sm transition-colors {% if request.endpoint == 'track' %}text-white border-b-2 border-ak-purple pb-px{% else %}text-ak-muted hover:text-white{% endif %}">
+                    Track &amp; Karts
+                </a>
+                <a href="/contact"
+                   class="text-sm transition-colors {% if request.endpoint == 'contact' %}text-white border-b-2 border-ak-purple pb-px{% else %}text-ak-muted hover:text-white{% endif %}">
+                    Contact Us
+                </a>
+                <a href="/bookings"
+                   class="text-sm transition-colors {% if request.endpoint == 'bookings' %}text-white border-b-2 border-ak-purple pb-px{% else %}text-ak-muted hover:text-white{% endif %}">
+                    Book Now
+                </a>
+            </div>
+
+            <a href="/login"
+               class="shrink-0 bg-ak-purple text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                Log In / Register
+            </a>
+        </div>
+    </nav>
+
+    <!-- content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- footer -->
+    <footer class="bg-ak-bg border-t border-ak-border">
+        <div class="max-w-6xl mx-auto px-6 pt-10 pb-6">
+            <div class="grid grid-cols-4 gap-8 mb-8">
+                <div>
+                    <p class="text-white font-bold text-base mb-2">Awesome Karts</p>
+                    <p class="text-ak-muted text-sm leading-relaxed">The most popular Go Kart track in Newcastle</p>
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm mb-3">Navigation</p>
+                    <ul class="space-y-2">
+                        <li><a href="/"        class="text-ak-muted text-sm hover:text-white transition-colors">Home</a></li>
+                        <li><a href="/pricing" class="text-ak-muted text-sm hover:text-white transition-colors">Pricing</a></li>
+                        <li><a href="/track"   class="text-ak-muted text-sm hover:text-white transition-colors">Track &amp; Karts</a></li>
+                        <li><a href="/contact" class="text-ak-muted text-sm hover:text-white transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm mb-3">Legal</p>
+                    <ul class="space-y-2">
+                        <li><a href="/refund-policy"  class="text-ak-muted text-sm hover:text-white transition-colors">Refund Policy</a></li>
+                        <li><a href="/privacy-policy" class="text-ak-muted text-sm hover:text-white transition-colors">Privacy Policy</a></li>
+                        <li><a href="/terms-of-use"   class="text-ak-muted text-sm hover:text-white transition-colors">Terms Of Use</a></li>
+                        <li><a href="/cookie-policy"  class="text-ak-muted text-sm hover:text-white transition-colors">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <p class="text-white font-semibold text-sm mb-3">Find Us</p>
+                    <ul class="space-y-2">
+                        <li class="text-ak-muted text-sm">123 Raceway Drive, Newcastle</li>
+                        <li class="text-ak-muted text-sm">0491 120 000</li>
+                        <li class="text-ak-muted text-sm">hello@awesomekarts.com.au</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-ak-border pt-5">
+                <p class="text-ak-hint text-xs">© 2026 Awesome Karts Pty Ltd.&nbsp; ABN 00 000 000 000 &nbsp;|&nbsp; All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Track &amp; Karts - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-12">
+
+    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+    <h1 class="text-4xl font-bold text-white mb-2">The Track</h1>
+    <p class="text-ak-muted text-sm mb-8">Come visit the longest outdoor track in New South Wales!</p>
+
+    <div class="grid grid-cols-2 gap-4 mb-16">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8">
+            <p class="text-white font-bold text-base mb-4">Track Tips:</p>
+            <ul class="space-y-2 text-ak-muted text-sm list-disc list-inside">
+                <li>Use the entire track width</li>
+                <li>Use your brakes</li>
+                <li>Try not to slide</li>
+                <li>Aim for high exit speed</li>
+                <li>Put corners together</li>
+                <li>Remember: Slow in = Fast Out</li>
+            </ul>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col items-center justify-center min-h-[220px]">
+            <p class="text-white font-bold text-base mb-4 self-start">Track Map:</p>
+            <div class="flex-1 w-full flex items-center justify-center">
+                <p class="text-ak-hint text-sm">Track Photo Here</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+    <h2 class="text-4xl font-bold text-white mb-2">The Karts</h2>
+    <p class="text-ak-muted text-sm mb-8">Drive the fastest petrol powered karts on the market!</p>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col items-center justify-center min-h-[220px]">
+            <p class="text-white font-bold text-base mb-4 self-start">Senior Kart:</p>
+            <div class="flex-1 w-full flex items-center justify-center">
+                <p class="text-ak-hint text-sm">Kart Photo Here</p>
+            </div>
+        </div>
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8">
+            <p class="text-white font-bold text-base mb-4">Senior Kart Stats:</p>
+            <ul class="space-y-1.5 text-ak-muted text-sm">
+                <li><span class="text-white">Model:</span></li>
+                <li><span class="text-white">Dimensions:</span></li>
+                <li><span class="text-white">Weight:</span></li>
+                <li><span class="text-white">Brakes:</span></li>
+                <li><span class="text-white">Drive:</span></li>
+                <li><span class="text-white">HP:</span></li>
+                <li><span class="text-white">Max RPM:</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8 flex flex-col items-center justify-center min-h-[220px]">
+            <p class="text-white font-bold text-base mb-4 self-start">Junior Kart:</p>
+            <div class="flex-1 w-full flex items-center justify-center">
+                <p class="text-ak-hint text-sm">Kart Photo Here</p>
+            </div>
+        </div>
+        <div class="bg-ak-card border border-ak-border rounded-xl p-8">
+            <p class="text-white font-bold text-base mb-4">Junior Kart Stats</p>
+            <ul class="space-y-1.5 text-ak-muted text-sm">
+                <li><span class="text-white">Model:</span></li>
+                <li><span class="text-white">Dimensions:</span></li>
+                <li><span class="text-white">Weight:</span></li>
+                <li><span class="text-white">Brakes:</span></li>
+                <li><span class="text-white">Drive:</span></li>
+                <li><span class="text-white">HP:</span></li>
+                <li><span class="text-white">Max RPM:</span></li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
