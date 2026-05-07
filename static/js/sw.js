@@ -1,11 +1,14 @@
 const CACHE_NAME = "awesomekart-pwa-v1";
 const ASSETS = [
     "/",
-    "static/icons/icon-dark-2000.png",
-    "static/icons/icon-light-2000.png",
+    "/static/icons/icon-dark-2000.png",
+    "/static/icons/icon-light-2000.png",
     "/static/css/style.css",
     "/static/js/app.js",
     "/static/manifest.json",
+    "/static/img/kart-jnr.png",
+    "/static/img/kart-snr.png",
+    "/static/img/track-map.png",
 ];
 
 self.addEventListener("install", (event) => {
