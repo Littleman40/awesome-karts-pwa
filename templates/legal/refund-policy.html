@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Refund Policy - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-12">
+    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+    <h1 class="text-4xl font-bold text-white mb-2">Refund Policy</h1>
+    <p class="text-ak-hint text-sm mb-10">Last updated: May 2026</p>
+
+    <div class="space-y-8 text-ak-muted text-sm leading-relaxed">
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Overview</h2>
+            <p>Awesome Karts is committed to providing a fair and transparent refund process in accordance with Australian Consumer Law (ACL) and our internal booking policies.</p>
+        </section>
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Cancellations by the Customer</h2>
+            <p>Customers who wish to cancel a booking and receive a refund must contact Awesome Karts at least 72 hours (3 days) prior to the scheduled booking time. Cancellations made less than 72 hours before the booking will not be eligible for a refund, unless exceptional circumstances apply. To request a cancellation, please call us on 0491 120 000 or contact us during business hours.</p>
+        </section>
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Cancellations by Awesome Karts</h2>
+            <p>In the event that Awesome Karts cancels or significantly changes your booking (e.g., due to weather, equipment failure, or facility closure), you will be entitled to a full refund or the option to reschedule at no additional cost.</p>
+        </section>
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Refund Processing</h2>
+            <p>Approved refunds will be processed back to the original payment method within 5–10 business days. Awesome Karts uses Stripe to process all payments; refund timelines are subject to your card issuer's policies.</p>
+        </section>
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Australian Consumer Law</h2>
+            <p>Our policy does not exclude or limit any rights you may have under the Australian Consumer Law. If a service is not provided with due care and skill, you may be entitled to a remedy under the ACL regardless of this policy.</p>
+        </section>
+        <section>
+            <h2 class="text-white font-semibold text-base mb-3">Contact</h2>
+            <p>For refund enquiries, please contact us at <a href="mailto:hello@awesomekarts.com.au" class="text-ak-purple hover:text-purple-400 transition-colors">hello@awesomekarts.com.au</a> or call <a href="tel:0491120000" class="text-ak-purple hover:text-purple-400 transition-colors">0491 120 000</a>.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

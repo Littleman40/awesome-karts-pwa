@@ -1,0 +1,24 @@
+{
+    "name": "Awesome Karts Website",
+    "short_name": "Awesome Karts",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [
+        {
+            "src": "/static/icons/icon-light-2000.png",
+            "sizes": "2000x2000",
+            "type": "image/png",
+            "purpose": "any maskable",
+            "media": "(prefers-color-scheme: dark)"
+        },
+        {
+            "src": "/static/icons/icon-dark-2000.png",
+            "sizes": "2000x2000",
+            "type": "image/png",
+            "purpose": "any maskable",
+            "media": "(prefers-color-scheme: light)"
+        }
+    ]
+}
