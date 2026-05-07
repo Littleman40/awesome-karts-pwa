@@ -17,22 +17,22 @@
 <div class="overflow-hidden py-4 border-y border-ak-border">
     <div class="reviews-track flex gap-4" style="width: max-content;">
         {% set reviews = [
-            ("Most fun I have had in years! This is awesome!", "Johnathan", "21/01/2025"),
-            ("Absolutely incredible experience, will be back!", "Sarah", "14/05/2025"),
-            ("Best karting track in Australia by far!", "Marcus", "07/08/2025"),
-            ("My kids had the best time. Highly recommend!", "Claire", "02/12/2025"),
-            ("Fast karts, great track layout, friendly staff.", "Daniel", "28/07/2025"),
-            ("Came for a birthday and everyone loved it!", "Priya", "20/12/2024"),
-            ("The track is huge and the karts are so quick!", "Tyler", "15/01/2026"),
-            ("Perfect afternoon out. Already booked again.", "Emma", "10/03/2026")
+            ("Most fun I have had in years! This is awesome!", "Johnathan", "21/01/2025", "men", 32),
+            ("Absolutely incredible experience, will be back!", "Sarah", "14/05/2025", "women", 11),
+            ("Best karting track in Australia by far!", "Marcus", "07/08/2025", "men", 45),
+            ("My kids had the best time. Highly recommend!", "Claire", "02/12/2025", "women", 68),
+            ("Fast karts, great track layout, friendly staff.", "Daniel", "28/07/2025", "men", 17),
+            ("Came for a birthday and everyone loved it!", "Priya", "20/12/2024", "women", 52),
+            ("The track is huge and the karts are so quick!", "Tyler", "15/01/2026", "men", 73),
+            ("Perfect afternoon out. Already booked again.", "Emma", "10/03/2026", "women", 26)
         ] %}
-        {% for text, name, date in reviews * 2 %}
+        {% for text, name, date, gender, photo_id in reviews * 2 %}
         <div class="bg-ak-card border border-ak-border rounded-xl p-5 shrink-0 w-64">
             <p class="text-white text-sm leading-relaxed mb-4">{{ text }}</p>
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-ak-border flex items-center justify-center shrink-0">
-                    <span class="text-ak-muted text-xs font-semibold">{{ name[0] }}</span>
-                </div>
+                <img src="https://randomuser.me/api/portraits/{{ gender }}/{{ photo_id }}.jpg"
+                     alt="{{ name }}"
+                     class="w-8 h-8 rounded-full object-cover shrink-0">
                 <div>
                     <p class="text-white text-sm font-medium leading-none mb-1">{{ name }}</p>
                     <p class="text-ak-hint text-xs">{{ date }}</p>

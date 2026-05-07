@@ -58,5 +58,10 @@ def service_worker():
     return send_from_directory('static/js', 'sw.js', mimetype='application/javascript')
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
 if __name__ == "__main__":
     app.run(debug=True)

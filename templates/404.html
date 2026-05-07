@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found - Awesome Karts{% endblock %}
+
+{% block content %}
+<section class="flex flex-col items-center justify-center text-center min-h-[70vh] px-6">
+
+    <div class="w-8 h-0.5 bg-ak-purple mb-6"></div>
+
+    <h1 class="text-7xl font-extrabold text-white tracking-tight mb-4">ERROR 404</h1>
+    <p class="text-ak-muted text-lg mb-8 leading-relaxed max-w-xl">
+        Looks like you've taken a wrong turn. The page you're looking for<br>
+        doesn't exist or may have been moved.
+    </p>
+
+    <div class="flex items-center gap-3">
+        <a href="/"
+           class="inline-flex items-center gap-2 bg-ak-purple text-white font-semibold px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+            Back to Home <span aria-hidden="true">→</span>
+        </a>
+        <a href="/bookings"
+           class="inline-flex items-center gap-2 bg-ak-card border border-ak-border text-white font-semibold px-6 py-3 rounded-lg hover:border-ak-purple transition-colors text-sm">
+            Book a Session
+        </a>
+    </div>
+
+</section>
+{% endblock %}
