@@ -1,0 +1,23 @@
+# Awesome Karts
+
+This is a venue website built as my Year 12 NSW HSC Software Engineering Major Project. This project will allow customers to browse the site, create accounts, book karting sessions, sign waivers, and pay. With an extra admin panel for the staff administrators.
+
+## Tech stack (so far)
+
+- **Flask**: https://flask.palletsprojects.com/en/stable/
+- **Jinja**: https://jinja.palletsprojects.com/en/stable/ 
+- **Tailwind CSS**: https://tailwindcss.com/
+
+## Running it locally
+
+### Setup
+1. clone/download repo
+2. install dependencies
+```bash
+pip install -r requirements.txt
+```
+3. run the server
+```bash
+python app.py
+```
+
