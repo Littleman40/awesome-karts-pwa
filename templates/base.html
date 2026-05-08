@@ -47,7 +47,7 @@
         <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
             <a href="/" class="text-white font-bold text-lg tracking-tight shrink-0">Awesome Karts</a>
 
-            <div class="flex items-center gap-6">
+            <div class="hidden md:flex items-center gap-6">
                 <a href="/"
                    class="text-sm transition-colors {% if request.endpoint == 'home' %} text-white border-b-2 border-ak-purple pb-px {% else %} text-ak-muted hover:text-white {% endif %}">
                     Home
@@ -70,12 +70,78 @@
                 </a>
             </div>
 
-            <a href="/login"
-               class="shrink-0 bg-ak-purple text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
-                Log In / Register
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="/login"
+                   class="hidden sm:inline-block shrink-0 bg-ak-purple text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-purple-600 transition-colors">
+                    Log In / Register
+                </a>
+                <button id="nav-toggle" type="button"
+                        class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-white hover:bg-ak-card transition-colors"
+                        aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-nav">
+                    <svg id="nav-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <svg id="nav-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M6 18L18 6"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- mobile dropdown -->
+        <div id="mobile-nav" class="hidden md:hidden border-t border-ak-border bg-ak-bg">
+            <div class="max-w-6xl mx-auto px-6 py-3 flex flex-col gap-1">
+                <a href="/"
+                   class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'home' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
+                    Home
+                </a>
+                <a href="/pricing"
+                   class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'pricing' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
+                    Pricing &amp; Hours
+                </a>
+                <a href="/track"
+                   class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'track' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
+                    Track &amp; Karts
+                </a>
+                <a href="/contact"
+                   class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'contact' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
+                    Contact Us
+                </a>
+                <a href="/bookings"
+                   class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'bookings' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
+                    Book Now
+                </a>
+                <a href="/login"
+                   class="sm:hidden block mt-2 px-3 py-2 rounded-lg text-sm font-medium bg-ak-purple text-white text-center hover:bg-purple-600 transition-colors">
+                    Log In / Register
+                </a>
+            </div>
         </div>
     </nav>
+
+    <script>
+        (function () {
+            var toggle = document.getElementById('nav-toggle');
+            var menu = document.getElementById('mobile-nav');
+            var iconOpen = document.getElementById('nav-icon-open');
+            var iconClose = document.getElementById('nav-icon-close');
+            if (!toggle || !menu) return;
+            toggle.addEventListener('click', function () {
+                var isOpen = !menu.classList.contains('hidden');
+                if (isOpen) {
+                    menu.classList.add('hidden');
+                    iconOpen.classList.remove('hidden');
+                    iconClose.classList.add('hidden');
+                    toggle.setAttribute('aria-expanded', 'false');
+                } else {
+                    menu.classList.remove('hidden');
+                    iconOpen.classList.add('hidden');
+                    iconClose.classList.remove('hidden');
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+            });
+        })();
+    </script>
 
     <!-- content -->
     <main class="flex-1">
