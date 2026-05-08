@@ -10,7 +10,6 @@ This is a venue website built as my Year 12 NSW HSC Software Engineering Major P
 
 ## Running it locally
 
-### Setup
 1. clone/download repo
 2. install dependencies
 ```bash
