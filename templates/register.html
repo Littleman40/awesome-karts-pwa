@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Create Account - Awesome Karts{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-center px-6 py-16">
+    <h1 class="text-3xl font-bold text-white mb-2">Create Your Account</h1>
+    <p class="text-ak-muted text-sm mb-8">You must be 18 or over to register.</p>
+
+    <div class="bg-ak-card border border-ak-border rounded-xl p-8 w-full max-w-xl">
+        <form id="register-form" class="space-y-5" novalidate>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="reg-first" class="block text-white text-sm font-medium mb-1.5">First Name</label>
+                    <input id="reg-first" name="first_name" type="text" required autocomplete="given-name"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label for="reg-last" class="block text-white text-sm font-medium mb-1.5">Last Name</label>
+                    <input id="reg-last" name="last_name" type="text" required autocomplete="family-name"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="reg-gender" class="block text-white text-sm font-medium mb-1.5">Gender</label>
+                    <select id="reg-gender" name="gender" required
+                            class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_to_say">Prefer not to say</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="reg-dob" class="block text-white text-sm font-medium mb-1.5">Date of Birth</label>
+                    <input id="reg-dob" name="dob" type="date" required
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+
+            <div>
+                <label for="reg-address" class="block text-white text-sm font-medium mb-1.5">Address</label>
+                <input id="reg-address" name="address" type="text" required autocomplete="street-address"
+                       class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="reg-phone" class="block text-white text-sm font-medium mb-1.5">Phone</label>
+                    <input id="reg-phone" name="phone" type="tel" required placeholder="0412 345 678" autocomplete="tel"
+                           class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label for="reg-email" class="block text-white text-sm font-medium mb-1.5">Email</label>
+                    <input id="reg-email" name="email" type="email" required autocomplete="email"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="reg-password" class="block text-white text-sm font-medium mb-1.5">Password</label>
+                    <input id="reg-password" name="password" type="password" required minlength="8" autocomplete="new-password"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    <p class="text-ak-hint text-xs mt-1">Min 8 characters, with a letter and a number.</p>
+                </div>
+                <div>
+                    <label for="reg-confirm" class="block text-white text-sm font-medium mb-1.5">Confirm Password</label>
+                    <input id="reg-confirm" name="confirm_password" type="password" required minlength="8" autocomplete="new-password"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+
+            <p data-form-error class="hidden text-sm text-red-400"></p>
+
+            <button type="submit"
+                    class="w-full bg-ak-purple hover:bg-purple-600 text-white font-medium text-sm py-3 rounded-lg transition-colors">
+                Create Account
+            </button>
+
+            <p class="text-center text-ak-muted text-sm">
+                Already have an account?
+                <a href="/login" class="text-ak-purple hover:text-purple-400 underline">Log in</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}
