@@ -5,18 +5,22 @@ This is a venue website built as my Year 12 NSW HSC Software Engineering Major P
 ## Tech stack (so far)
 
 - **Flask**: https://flask.palletsprojects.com/en/stable/
-- **Jinja**: https://jinja.palletsprojects.com/en/stable/ 
+- **Jinja**: https://jinja.palletsprojects.com/en/stable/
 - **Tailwind CSS**: https://tailwindcss.com/
+- **MongoDB Atlas**: https://www.mongodb.com/atlas
+- **bcrypt**: https://flask-bcrypt.readthedocs.io/en/1.0.1/
 
-## Running it locally
+## run it locally
 
-1. clone/download repo
-2. install dependencies
-```bash
-pip install -r requirements.txt
-```
-3. run the server
-```bash
-python app.py
-```
+1. **clone/download the repo**
+2. **install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **set up MongoDB Atlas**
+4. **create a `.env` file**
+5. **run the server**
+   ```bash
+   python app.py
+   ```
 
