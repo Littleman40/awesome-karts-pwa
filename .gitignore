@@ -52,3 +52,6 @@ claude.md
 
 # Notes
 LOGIN_SYSTEM.md
+
+# gitignore itself
+.gitignore
