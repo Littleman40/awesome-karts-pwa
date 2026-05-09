@@ -7,14 +7,14 @@ from routes.auth import auth_bp
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__)                              
     app.config.from_object(Config)
 
-    mongo.init_app(app)
+    mongo.init_app(app) 
 
     with app.app_context():
         try:
-            ensure_indexes(mongo)
+            ensure_indexes(mongo)                     
         except Exception as e:
             app.logger.warning(f"Could not ensure MongoDB indexes: {e}")
 
@@ -23,11 +23,12 @@ def create_app():
     @app.context_processor
     def inject_current_user():
         user = None
-        if "user_id" in session:
+        if "user_id" in session:                            # if session cookie exists look up user in db
             user = find_by_id(mongo, session["user_id"])
-            if user is None:
+            if user is None:                                # if user doesnt exist then log them out
                 session.clear()
-        return {"current_user": user}
+        return {"current_user": user}                       # now pages can now do {{ current_user.first_name }}
+
 
     @app.route("/")
     def home():
@@ -91,11 +92,11 @@ def create_app():
     def page_not_found(e):
         return render_template("404.html"), 404
 
-    return app
+    return app                                       
 
 
 app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)                                                 # turn offfffffff in prod

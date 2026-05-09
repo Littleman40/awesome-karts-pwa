@@ -1,4 +1,6 @@
-from functools import wraps
+# used later to protect routes that require login or admin access so we dont repeat ourselfs over and over and over and over again
+
+from functools import wraps                            
 from flask import session, jsonify, redirect, request
 
 
@@ -6,10 +8,11 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if "user_id" not in session:
+
             if request.path.startswith("/api/"):
                 return jsonify({"success": False, "error": "Login required"}), 401
             return redirect("/login")
-        return f(*args, **kwargs)
+        return f(*args, **kwargs)                 
     return decorated
 
 
