@@ -1,5 +1,5 @@
-const CACHE_NAME = "awesomekart-pwa-v1";                    // service worker for caching
-const ASSETS = [                                            // cached items
+var CACHE_NAME = "awesomekart-pwa-v1";                                  // service worker for caching
+var CACHED_ASSETS = [                                                   // cached items
     "/",
     "/static/icons/icon-dark-2000.png",
     "/static/icons/icon-light-2000.png",
@@ -11,22 +11,36 @@ const ASSETS = [                                            // cached items
     "/static/img/track-map.png",
 ];
 
-self.addEventListener("install", (event) => {                   // installs cache when its loaded
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+self.addEventListener("install", function (installEvent) {              // installs cache as the pwa is installed
+    installEvent.waitUntil(
+        caches.open(CACHE_NAME).then(function (cacheStorage) {
+            return cacheStorage.addAll(CACHED_ASSETS);
+        })
     );
 });
 
-self.addEventListener("activate", (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-        )
+self.addEventListener("activate", function (activateEvent) {            // deletes old caches when new service worker is activated
+    activateEvent.waitUntil(
+        caches.keys().then(function (cacheKeyList) {
+            var deletePromises = [];
+            for (var i = 0; i < cacheKeyList.length; i++) {
+                var cacheKeyName = cacheKeyList[i];
+                if (cacheKeyName !== CACHE_NAME) {
+                    deletePromises.push(caches.delete(cacheKeyName));
+                }
+            }
+            return Promise.all(deletePromises);
+        })
     );
 });
 
-self.addEventListener("fetch", (event) => {
-    event.respondWith(
-        caches.match(event.request).then((cached) => cached || fetch(event.request))
+self.addEventListener("fetch", function (fetchEvent) {                  // fetches the cached items when they are requested
+    fetchEvent.respondWith(
+        caches.match(fetchEvent.request).then(function (cachedResponse) {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return fetch(fetchEvent.request);
+        })
     );
 });

@@ -1,56 +1,56 @@
-from datetime import datetime          
-import bcrypt                          
-from bson import ObjectId              
+from datetime import datetime
+import bcrypt
+from bson import ObjectId
 
 
-def _users(mongo):                                                              # for internal use only - would return all the users connected to db
+def fn_get_users_collection(mongo):                                     # for internal use only - would return all the users connected to db
     return mongo.db.users
 
 
-def ensure_indexes(mongo):                                                      # ensures every user has unique email address 
-    _users(mongo).create_index("email", unique=True)
+def fn_ensure_db_indexes(mongo):                                        # ensures every user has unique email address 
+    fn_get_users_collection(mongo).create_index("email", unique=True)
 
 
-def hash_password(plain):                                                       # hashing for password - uses gensalt to recreate random hash for each user - just normal hashing stuff lol
-    return bcrypt.hashpw(plain.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+def fn_hash_password(plain_text_password):                              # hashing for password - uses gensalt to recreate random hash for each user - just normal hashing stuff lol
+    return bcrypt.hashpw(plain_text_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
-def verify_password(plain, hashed):                                             # compares plain password to hashed stored password
+def fn_verify_password(plain_text_password, hashed_password):           # compares plain password to hashed stored password
     try:
-        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
-    except (ValueError, AttributeError):                                        # error handling to avoid crashes
+        return bcrypt.checkpw(plain_text_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except (ValueError, AttributeError):                                # error handling to avoid crashes
         return False
 
 
-def find_by_email(mongo, email):                                                # find users by email - used to check for duplicates
-    return _users(mongo).find_one({"email": email.lower()})
+def fn_find_user_by_email(mongo, email_address):                        # find users by email - used to check for duplicates
+    return fn_get_users_collection(mongo).find_one({"email": email_address.lower()})
 
 
-def find_by_id(mongo, user_id):                                                 # converts user id string to object id
+def fn_find_user_by_id(mongo, user_id_string):                          # converts user id string to object id
     try:
-        oid = ObjectId(user_id)
+        user_object_id = ObjectId(user_id_string)
     except Exception:
         return None
-    return _users(mongo).find_one({"_id": oid})
+    return fn_get_users_collection(mongo).find_one({"_id": user_object_id})
 
 
-def email_exists(mongo, email):                                                 # checks if an email is already registered
-    return _users(mongo).count_documents({"email": email.lower()}, limit=1) > 0
+def fn_check_email_exists(mongo, email_address):                        # checks if an email is already registered
+    return fn_get_users_collection(mongo).count_documents({"email": email_address.lower()}, limit=1) > 0
 
 
-def create_user(mongo, cleaned):                                                # creates new user in mongodb - cleaned comes from the validators.py
-    doc = {
-        "first_name": cleaned["first_name"],
-        "last_name": cleaned["last_name"],
-        "gender": cleaned["gender"],
-        "dob": cleaned["dob"],
-        "address": cleaned["address"],
-        "phone": cleaned["phone"],
-        "email": cleaned["email"],
-        "password_hash": hash_password(cleaned["password"]),  
-        "created_at": datetime.utcnow(),                       
-        "waiver_accepted": False,                              
+def fn_create_user(mongo, cleaned_user_data):                           # creates new user in mongodb - cleaned comes from the validators.py
+    new_user_document = {
+        "first_name": cleaned_user_data["first_name"],
+        "last_name": cleaned_user_data["last_name"],
+        "gender": cleaned_user_data["gender"],
+        "dob": cleaned_user_data["dob"],
+        "address": cleaned_user_data["address"],
+        "phone": cleaned_user_data["phone"],
+        "email": cleaned_user_data["email"],
+        "password_hash": fn_hash_password(cleaned_user_data["password"]),
+        "created_at": datetime.utcnow(),
+        "waiver_accepted": False,
         "waiver_accepted_at": None,
     }
-    result = _users(mongo).insert_one(doc)                                     # inserts into the db
-    return str(result.inserted_id)                                             # returns the userid used for session cookies
+    insert_result = fn_get_users_collection(mongo).insert_one(new_user_document)        # inserts into the db
+    return str(insert_result.inserted_id)                                               # returns the userid used for session cookies
