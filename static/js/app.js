@@ -1,4 +1,4 @@
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator) {                                    // loads service worker to allow for pwa and caching
     window.addEventListener("load", () => {
         navigator.serviceWorker
             .register("/sw.js")
