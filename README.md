@@ -2,6 +2,17 @@
 
 This is a venue website built as my Year 12 NSW HSC Software Engineering Major Project. This project will allow customers to browse the site, create accounts, book karting sessions, sign waivers, and pay. With an extra admin panel for the staff administrators.
 
+## Current Features
+- [x] Static Pages
+- [x] Log In/ Register System
+
+## Planned Updates
+- [ ] User Dashboard 
+- [ ] Booking System
+- [ ] Admin Management
+- [ ] Payment System
+- [ ] Notification System
+
 ## Tech stack (so far)
 
 - **Flask**: https://flask.palletsprojects.com/en/stable/
