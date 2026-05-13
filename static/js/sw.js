@@ -1,5 +1,5 @@
-const CACHE_NAME = "awesomekart-pwa-v1";
-const ASSETS = [
+const CACHE_NAME = "awesomekart-pwa-v1";                    // service worker for caching
+const ASSETS = [                                            // cached items
     "/",
     "/static/icons/icon-dark-2000.png",
     "/static/icons/icon-light-2000.png",
@@ -11,7 +11,7 @@ const ASSETS = [
     "/static/img/track-map.png",
 ];
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", (event) => {                   // installs cache when its loaded
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
     );
