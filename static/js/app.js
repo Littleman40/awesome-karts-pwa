@@ -1,8 +1,12 @@
-if ("serviceWorker" in navigator) {                                    // loads service worker to allow for pwa and caching
-    window.addEventListener("load", () => {
+if ("serviceWorker" in navigator) {                                                     // registers service worker for offline capabilities
+    window.addEventListener("load", function () {
         navigator.serviceWorker
             .register("/sw.js")
-            .then((reg) => console.log("Service worker registered:", reg.scope))
-            .catch((err) => console.error("Service worker registration failed:", err));
+            .then(function (serviceWorkerRegistration) {
+                console.log("Service worker registered:", serviceWorkerRegistration.scope);
+            })
+            .catch(function (registrationError) {
+                console.error("Service worker registration failed:", registrationError);
+            });
     });
 }

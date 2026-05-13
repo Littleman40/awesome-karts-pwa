@@ -2,95 +2,94 @@ import re
 from datetime import date, datetime
 from email_validator import validate_email, EmailNotValidError
 
-AU_PHONE_RE = re.compile(r"^(\+614|04)\d{8}$")                  # australian number only - i guess is limiting for people that are tourists... out of the scope for this project
+AU_PHONE_RE = re.compile(r"^(\+614|04)\d{8}$")                                      # australian number only - i guess is limiting for people that are tourists... out of the scope for this project
 
 ALLOWED_GENDERS = {"male", "female", "other", "prefer_not_to_say"}
 
 
-def is_valid_email(email):                                      # email validity checker from library  
+def fn_is_valid_email(email_address):                                               # email validity checker from library  
     try:
-        validate_email(email, check_deliverability=False)
+        validate_email(email_address, check_deliverability=False)
         return True
     except EmailNotValidError:
         return False
 
 
-def is_valid_au_phone(phone):                                   # phone checker using regex to allow for +61 and 04... formats
-    if not isinstance(phone, str):
+def fn_is_valid_au_phone(phone_number):                                             # phone checker using regex to allow for +61 and 04... formats
+    if not isinstance(phone_number, str):
         return False
-    cleaned = phone.replace(" ", "").replace("-", "")
-    return bool(AU_PHONE_RE.match(cleaned))
+    cleaned_phone = phone_number.replace(" ", "").replace("-", "")
+    return bool(AU_PHONE_RE.match(cleaned_phone))
 
 
-def is_valid_password(password):                                # password validity checker - so we have users with strong passwords
-    if not isinstance(password, str) or len(password) < 8:
+def fn_is_valid_password(plain_text_password):                                      # password validity checker - so we have users with strong passwords
+    if not isinstance(plain_text_password, str) or len(plain_text_password) < 8:
         return False
-    has_letter = any(c.isalpha() for c in password)
-    has_number = any(c.isdigit() for c in password)
-    return has_letter and has_number
+    has_letter_character = any(c.isalpha() for c in plain_text_password)
+    has_number_character = any(c.isdigit() for c in plain_text_password)
+    return has_letter_character and has_number_character
 
 
-def parse_dob(dob_str):                                         # ensures date of birth is in correct format
+def fn_parse_date_of_birth(date_of_birth_string):                                   # ensures date of birth is in correct format
     try:
-        return datetime.strptime(dob_str, "%Y-%m-%d").date()
+        return datetime.strptime(date_of_birth_string, "%Y-%m-%d").date()
     except (ValueError, TypeError):
         return None
 
 
-def age_from_dob(dob):                                          # age calculator
-    today = date.today()
-    years = today.year - dob.year
-    if (today.month, today.day) < (dob.month, dob.day):
-        years -= 1
-    return years
+def fn_get_age_from_dob(date_of_birth):                                             # age calculator
+    current_date = date.today()
+    user_age = current_date.year - date_of_birth.year
+    if (current_date.month, current_date.day) < (date_of_birth.month, date_of_birth.day):
+        user_age -= 1
+    return user_age
 
 
-def is_adult(dob):                                              # only 18+ can register
-    return age_from_dob(dob) >= 18
+def fn_is_adult(date_of_birth):                                                     # only 18+ can register
+    return fn_get_age_from_dob(date_of_birth) >= 18
 
 
-def validate_registration(data):                                # ensure everything is entered
-    required = ["first_name", "last_name", "gender", "dob",
-                "address", "phone", "email", "password"]
-    for field in required:
-        if not data.get(field):
+def fn_validate_registration(registration_data):                                    # ensure everything is entered
+    required_fields = ["first_name", "last_name", "gender", "dob", "address", "phone", "email", "password"]
+    for field in required_fields:
+        if not registration_data.get(field):
             return None, f"Please fill in all fields ({field.replace('_', ' ')} is missing)."
 
-    first_name = data["first_name"].strip()
-    last_name = data["last_name"].strip()
-    gender = data["gender"].strip().lower()
-    address = data["address"].strip()
-    phone = data["phone"].strip()
-    email = data["email"].strip().lower()
-    password = data["password"]                                
+    first_name = registration_data["first_name"].strip()
+    last_name = registration_data["last_name"].strip()
+    gender = registration_data["gender"].strip().lower()
+    address = registration_data["address"].strip()
+    phone = registration_data["phone"].strip()
+    email_address = registration_data["email"].strip().lower()
+    plain_text_password = registration_data["password"]
 
     if gender not in ALLOWED_GENDERS:
         return None, "Please select a valid gender option."
 
-    if not is_valid_email(email):
+    if not fn_is_valid_email(email_address):
         return None, "Please enter a valid email address."
 
-    if not is_valid_au_phone(phone):
+    if not fn_is_valid_au_phone(phone):
         return None, "Please enter a valid Australian phone number (e.g. 0412 345 678)."
 
-    dob = parse_dob(data["dob"])
-    if dob is None:
+    date_of_birth = fn_parse_date_of_birth(registration_data["dob"])
+    if date_of_birth is None:
         return None, "Please enter a valid date of birth."
 
-    if not is_adult(dob):
+    if not fn_is_adult(date_of_birth):
         return None, "You must be 18 or over to register. Minors need to register under an adult's account."
 
-    if not is_valid_password(password):
+    if not fn_is_valid_password(plain_text_password):
         return None, "Password must be at least 8 characters and contain a letter and a number."
 
-    cleaned = {
+    cleaned_registration_data = {
         "first_name": first_name,
         "last_name": last_name,
         "gender": gender,
-        "dob": datetime.combine(dob, datetime.min.time()),
+        "dob": datetime.combine(date_of_birth, datetime.min.time()),
         "address": address,
         "phone": phone,
-        "email": email,
-        "password": password,                                  
+        "email": email_address,
+        "password": plain_text_password,
     }
-    return cleaned, None
+    return cleaned_registration_data, None
