@@ -8,6 +8,7 @@
 
     <div class="bg-ak-card border border-ak-border rounded-xl p-8 w-full max-w-xl">
         <form id="register-form" class="space-y-5" novalidate>
+            <input type="hidden" data-next-url value="{{ request.args.get('next', '/dashboard') | e }}">
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

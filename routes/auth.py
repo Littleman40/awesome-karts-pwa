@@ -40,10 +40,14 @@ def fn_register():
     except DuplicateKeyError:
         return fn_error_response("An account with this email already exists.", 400)         # more error handling just in case
 
-    session.permanent = True                                                                # log in the user so they dont need to log in after registering 
+    session.permanent = True                                                                # log in the user so they dont need to log in after registering
     session["user_id"] = new_user_id
 
-    return fn_ok_response({"redirect": "/dashboard"}, 201)                                  # return successful response and redirect to dashboard
+    next_url = request_data.get("next", "/dashboard")                                       # client may send a `next` URL (eg "/bookings") so we redirect there after login
+    if not isinstance(next_url, str) or not next_url.startswith("/"):                       # only allow same-origin paths, prevents open-redirect attacks like next=https://evil.example
+        next_url = "/dashboard"
+
+    return fn_ok_response({"redirect": next_url}, 201)                                      # return successful response and redirect to dashboard (or next)
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -75,10 +79,14 @@ def fn_login():
     if not user_model.fn_verify_password(plain_text_password, stored_password_hash):
         return fn_error_response("Invalid email or password.", 400)
 
-    session.permanent = True                                                                # log in with session cookie    
+    session.permanent = True                                                                # log in with session cookie
     session["user_id"] = str(found_user["_id"])
 
-    return fn_ok_response({"redirect": "/dashboard"})                                       # success and redirect to dashboard
+    next_url = request_data.get("next", "/dashboard")                                       # client may send a `next` URL (eg "/bookings") so we redirect there after login
+    if not isinstance(next_url, str) or not next_url.startswith("/"):                       # only allow same-origin paths, prevents open-redirect attacks like next=https://evil.example
+        next_url = "/dashboard"
+
+    return fn_ok_response({"redirect": next_url})                                           # success and redirect to dashboard (or next)
 
 
 

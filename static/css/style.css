@@ -23,3 +23,11 @@ body {
 .reviews-track:hover {
     animation-play-state: paused;
 }
+
+.ak-date-input {
+    color-scheme: dark;
+}
+
+.ak-modal-backdrop {
+    background: rgba(0, 0, 0, 0.75);
+}

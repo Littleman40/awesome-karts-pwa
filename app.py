@@ -3,7 +3,10 @@ from flask import Flask, render_template, send_from_directory, session, redirect
 from config import Config
 from extensions import mongo
 from models.user import fn_ensure_db_indexes, fn_find_user_by_id
+from models.booking import fn_ensure_booking_indexes, fn_find_booking_by_share_token   # booking model / used for the share-link page and to create indexes on startup
 from routes.auth import auth_bp
+from routes.bookings import bookings_bp                                                # /api/bookings/* / slot lookups, create, share-add
+from routes.users import users_bp                                                      # /api/users/me/* / dashboard data (bookings, minors, waivers)
 
 
 def fn_create_app():
@@ -14,11 +17,14 @@ def fn_create_app():
 
     with app.app_context():
         try:
-            fn_ensure_db_indexes(mongo)
+            fn_ensure_db_indexes(mongo)                             # unique index on users.email
+            fn_ensure_booking_indexes(mongo)                        # unique compound index on slots.(date,hour) + unique share_token on bookings
         except Exception as index_error:
             app.logger.warning(f"Could not ensure MongoDB indexes: {index_error}")
 
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp)                                 # /api/auth/* / login, register, logout
+    app.register_blueprint(bookings_bp)                             # /api/bookings/* / slot lookups, create booking, add-to-account via share token
+    app.register_blueprint(users_bp)                                # /api/users/me/* / dashboard data (bookings, minors, waivers)
 
     @app.context_processor
     def fn_inject_current_user():
@@ -67,6 +73,11 @@ def fn_create_app():
     @app.route("/bookings")
     def fn_bookings():
         return render_template("bookings.html")
+
+    @app.route("/bookings/share/<share_token>")                                                 # public share page / anyone with the link can see the booking details
+    def fn_booking_share(share_token):
+        booking = fn_find_booking_by_share_token(mongo, share_token)                            # booking can be None / template handles the "not found" state
+        return render_template("bookings_share.html", booking=booking, share_token=share_token) # token also passed so the template can build the /login?next=... back-link
 
     @app.route("/refund-policy")
     def fn_refund_policy():
