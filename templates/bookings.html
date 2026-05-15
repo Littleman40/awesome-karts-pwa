@@ -2,13 +2,308 @@
 {% block title %}Book Now - Awesome Karts{% endblock %}
 
 {% block content %}
-<div class="flex flex-col items-center justify-center px-6 py-32 text-center">
-    <div class="w-8 h-0.5 bg-ak-purple mb-6 mx-auto"></div>
-    <h1 class="text-4xl font-bold text-white mb-3">Bookings Coming Soon</h1>
-    <p class="text-ak-muted text-sm max-w-sm">
-        Online booking will be available shortly. In the meantime, call us on
-        <a href="tel:0491120000" class="text-ak-purple hover:text-purple-400 transition-colors">0491 120 000</a>
-        to reserve your session.
-    </p>
+{# bk-cfg: hidden config element read by booking.js — tells the JS whether the user is logged in   #}
+<div id="bk-cfg" data-logged-in="{{ 'true' if current_user else 'false' }}" hidden></div>
+<div class="max-w-4xl mx-auto px-6 py-10">
+
+    <div id="booking-stepper" class="flex items-center justify-center mb-10 select-none">
+        <div class="flex items-center gap-0">
+            <div class="flex flex-col items-center" style="min-width:90px">
+                <div id="stepper-circle-1" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all bg-ak-purple border-ak-purple text-white">1</div>
+                <p class="text-xs mt-1.5 font-medium text-white text-center leading-tight" style="max-width:80px">Drivers &amp; Package</p>
+            </div>
+            <div id="stepper-line-1" class="h-0.5 w-12 mb-5 bg-ak-border transition-all"></div>
+            <div class="flex flex-col items-center" style="min-width:80px">
+                <div id="stepper-circle-2" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all border-ak-border text-ak-muted">2</div>
+                <p class="text-xs mt-1.5 font-medium text-ak-muted text-center leading-tight" style="max-width:72px">Date &amp; Time</p>
+            </div>
+            <div id="stepper-line-2" class="h-0.5 w-12 mb-5 bg-ak-border transition-all"></div>
+            <div class="flex flex-col items-center" style="min-width:72px">
+                <div id="stepper-circle-3" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all border-ak-border text-ak-muted">3</div>
+                <p class="text-xs mt-1.5 font-medium text-ak-muted text-center leading-tight" style="max-width:64px">Payment</p>
+            </div>
+            <div id="stepper-line-3" class="h-0.5 w-12 mb-5 bg-ak-border transition-all"></div>
+            <div class="flex flex-col items-center" style="min-width:64px">
+                <div id="stepper-circle-4" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all border-ak-border text-ak-muted">4</div>
+                <p class="text-xs mt-1.5 font-medium text-ak-muted text-center leading-tight" style="max-width:56px">Share</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="step-1">
+        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+        <h1 class="text-3xl font-bold text-white mb-6">Select Drivers &amp; Package</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-ak-card border border-ak-border rounded-xl p-6">
+                <p class="text-white font-semibold text-sm mb-5">Number of Drivers</p>
+                <div class="space-y-5">
+                    <div class="flex items-center justify-between">
+                        <p class="text-ak-muted text-sm">Adult Drivers (16+)</p>
+                        <div class="flex items-center gap-3">
+                            <button id="adult-dec" type="button"
+                                    class="w-8 h-8 rounded-lg bg-ak-border hover:bg-ak-purple text-white font-bold text-lg flex items-center justify-center transition-colors">−</button>
+                            <span id="adult-count" class="text-white font-bold text-lg w-6 text-center">0</span>
+                            <button id="adult-inc" type="button"
+                                    class="w-8 h-8 rounded-lg bg-ak-purple hover:bg-purple-600 text-white font-bold text-lg flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <p class="text-ak-muted text-sm">Junior Drivers (8–15)</p>
+                        <div class="flex items-center gap-3">
+                            <button id="junior-dec" type="button"
+                                    class="w-8 h-8 rounded-lg bg-ak-border hover:bg-ak-purple text-white font-bold text-lg flex items-center justify-center transition-colors">−</button>
+                            <span id="junior-count" class="text-white font-bold text-lg w-6 text-center">0</span>
+                            <button id="junior-inc" type="button"
+                                    class="w-8 h-8 rounded-lg bg-ak-purple hover:bg-purple-600 text-white font-bold text-lg flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-ak-card border border-ak-border rounded-xl p-6">
+                <p class="text-white font-semibold text-sm mb-2">Info:</p>
+                <p class="text-ak-muted text-sm leading-relaxed">There are no refunds given on the day for groups that overbook. Please double check your numbers, and edit them if needed a week prior at max.</p>
+            </div>
+        </div>
+
+        <p class="text-white font-bold text-lg mb-4">Select Package</p>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+
+            <div class="booking-pkg-card relative cursor-pointer bg-ak-card border-2 border-ak-purple rounded-xl p-4 flex flex-col transition-all" data-pkg="1_ride">
+                <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+                <p class="text-white font-bold text-xl mb-0.5">1 Session</p>
+                <p class="text-ak-muted text-xs mb-3">1× 13 Minute Run</p>
+                <p class="text-white font-bold text-base mb-auto">$37.50</p>
+                <div class="pkg-selected mt-3 flex items-center gap-1 text-ak-purple text-sm font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span>Selected</span>
+                </div>
+                <div class="pkg-select hidden mt-3 flex items-center gap-1 text-ak-muted text-sm">
+                    <span>—</span><span>Select</span>
+                </div>
+            </div>
+
+            <div class="booking-pkg-card relative cursor-pointer bg-ak-card border-2 border-ak-border rounded-xl p-4 flex flex-col transition-all" data-pkg="2_rides">
+                <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+                <p class="text-white font-bold text-xl mb-0.5">2 Sessions</p>
+                <p class="text-ak-muted text-xs mb-3">2× 13 Minute Run</p>
+                <div class="flex items-center gap-2 mb-auto">
+                    <p class="text-white font-bold text-base">$65.00</p>
+                    <span class="text-xs font-semibold bg-ak-border text-ak-muted px-1.5 py-0.5 rounded">-13%</span>
+                </div>
+                <div class="pkg-selected hidden mt-3 flex items-center gap-1 text-ak-purple text-sm font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span>Selected</span>
+                </div>
+                <div class="pkg-select mt-3 flex items-center gap-1 text-ak-muted text-sm">
+                    <span>—</span><span>Select</span>
+                </div>
+            </div>
+
+            <div class="booking-pkg-card relative cursor-pointer bg-ak-card border-2 border-ak-border rounded-xl p-4 flex flex-col transition-all" data-pkg="3_rides">
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-ak-purple text-white text-xs font-bold px-3 py-0.5 rounded-full whitespace-nowrap">Best Value</div>
+                <div class="w-6 h-0.5 bg-ak-purple mb-3 mt-1"></div>
+                <p class="text-white font-bold text-xl mb-0.5">3 Sessions</p>
+                <p class="text-ak-muted text-xs mb-3">3× 13 Minute Run</p>
+                <div class="flex items-center gap-2 mb-auto">
+                    <p class="text-white font-bold text-base">$85.00</p>
+                    <span class="text-xs font-semibold bg-ak-purple text-white px-1.5 py-0.5 rounded">-24%</span>
+                </div>
+                <div class="pkg-selected hidden mt-3 flex items-center gap-1 text-ak-purple text-sm font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span>Selected</span>
+                </div>
+                <div class="pkg-select mt-3 flex items-center gap-1 text-ak-muted text-sm">
+                    <span>—</span><span>Select</span>
+                </div>
+            </div>
+
+            <div class="booking-pkg-card relative cursor-pointer bg-ak-card border-2 border-ak-border rounded-xl p-4 flex flex-col transition-all" data-pkg="4_plus">
+                <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+                <p class="text-white font-bold text-xl mb-0.5">Custom</p>
+                <p class="text-ak-muted text-xs mb-3"><span id="extra-rides-display">1</span>× 13 Minute Sessions</p>
+                <p class="text-white font-bold text-base mb-auto" id="custom-price-display">$105.00<span class="text-ak-muted text-xs font-normal"> /person</span></p>
+                <div id="extra-rides-controls" class="hidden mt-2 mb-1">
+                    <p class="text-ak-hint text-xs mb-1.5">Extra rides (beyond 3)</p>
+                    <div class="flex items-center gap-2">
+                        <button id="extra-dec" type="button"
+                                class="w-7 h-7 rounded-lg bg-ak-border hover:bg-ak-purple text-white font-bold flex items-center justify-center transition-colors">−</button>
+                        <span id="extra-count" class="text-white font-bold w-5 text-center">1</span>
+                        <button id="extra-inc" type="button"
+                                class="w-7 h-7 rounded-lg bg-ak-purple hover:bg-purple-600 text-white font-bold flex items-center justify-center transition-colors">+</button>
+                    </div>
+                </div>
+                <div class="pkg-selected hidden mt-2 flex items-center gap-1 text-ak-purple text-sm font-medium">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span>Selected</span>
+                </div>
+                <div class="pkg-select mt-2 flex items-center gap-1 text-ak-muted text-sm">
+                    <span>—</span><span>Select</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-2">
+            <p class="text-ak-muted text-sm">Need a helping hand? Call us during business hours: <a href="tel:0491120000" class="text-ak-purple hover:text-purple-400">0491 120 000</a></p>
+        </div>
+    </div>
+
+    <div id="step-2" class="hidden">
+        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+        <h1 class="text-3xl font-bold text-white mb-6">Select Date</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-ak-card border border-ak-border rounded-xl p-5">
+                <div class="relative border-2 border-ak-purple rounded-lg px-3 pt-5 pb-3">
+                    <label class="absolute top-1 left-3 text-ak-purple text-xs font-semibold">Date</label>
+                    <input type="date" id="date-input" aria-label="Select booking date"
+                           class="w-full bg-transparent text-white text-sm focus:outline-none cursor-pointer ak-date-input">
+                </div>
+                <p id="date-display" class="text-ak-muted text-sm mt-3 hidden"></p>
+            </div>
+            <div id="date-info-card" class="hidden bg-ak-card border border-ak-border rounded-xl p-5">
+                <p class="text-white font-semibold text-sm mb-1">Additional Info: <em class="font-normal text-ak-muted">(if applicable)</em></p>
+                <p id="date-info-text" class="text-ak-muted text-sm"></p>
+            </div>
+        </div>
+
+        <p class="text-white font-bold text-lg mb-4">Select Time Slot</p>
+
+        <div id="slots-loading" class="hidden text-ak-muted text-sm py-4">Loading available times…</div>
+        <div id="slots-blocked" class="hidden bg-ak-card border border-ak-border rounded-xl p-5 mb-4">
+            <p class="text-white font-semibold text-sm mb-1">Not available</p>
+            <p id="slots-blocked-reason" class="text-ak-muted text-sm"></p>
+        </div>
+        <div id="slots-empty" class="hidden text-ak-muted text-sm py-4">Select a date above to see available times.</div>
+
+        <div id="slots-grid" class="hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="slots-container"></div>
+        </div>
+    </div>
+
+    <div id="step-3" class="hidden">
+        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+        <h1 class="text-3xl font-bold text-white mb-2">Sign In to Continue</h1>
+        <p class="text-ak-muted text-sm mb-8">You need to be logged in to complete your booking.</p>
+
+        <div class="max-w-md">
+            <div class="bg-ak-card border border-ak-border rounded-xl p-6">
+                <form id="booking-login-form" class="space-y-4" novalidate>
+                    <div>
+                        <label for="bl-email" class="block text-white text-sm font-medium mb-1.5">Email</label>
+                        <input id="bl-email" name="email" type="email" required autocomplete="email"
+                               class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    </div>
+                    <div>
+                        <label for="bl-password" class="block text-white text-sm font-medium mb-1.5">Password</label>
+                        <input id="bl-password" name="password" type="password" required autocomplete="current-password"
+                               class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    </div>
+                    <p id="booking-login-error" class="hidden text-sm text-red-400"></p>
+                    <button type="submit"
+                            class="w-full bg-ak-purple hover:bg-purple-600 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
+                        Log In &amp; Continue
+                    </button>
+                </form>
+                <div class="mt-4 pt-4 border-t border-ak-border text-center">
+                    <p class="text-ak-muted text-sm">
+                        Don't have an account?
+                        <a href="/register?next=/bookings" class="text-ak-purple hover:text-purple-400 underline">Register here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="step-4" class="hidden">
+        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+        <h1 class="text-3xl font-bold text-white mb-6">Confirm Your Booking</h1>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 mb-4 max-w-lg">
+            <p class="text-white font-semibold mb-4">Booking Summary</p>
+            <div class="space-y-2.5 text-sm">
+                <div class="flex justify-between"><span class="text-ak-muted">Date</span><span id="summary-date" class="text-white font-medium"></span></div>
+                <div class="flex justify-between"><span class="text-ak-muted">Time</span><span id="summary-time" class="text-white font-medium"></span></div>
+                <div class="flex justify-between"><span class="text-ak-muted">Drivers</span><span id="summary-drivers" class="text-white font-medium"></span></div>
+                <div class="flex justify-between"><span class="text-ak-muted">Package</span><span id="summary-package" class="text-white font-medium"></span></div>
+                <div class="border-t border-ak-border pt-2.5 flex justify-between">
+                    <span class="text-white font-semibold">Total</span>
+                    <span id="summary-total" class="text-white font-bold text-lg"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-4 max-w-lg">
+            <p class="text-ak-muted text-sm">Payment processing will be added in the final version. Your booking will be confirmed immediately.</p>
+        </div>
+
+        <p id="payment-error" class="hidden text-sm text-red-400 mb-3"></p>
+    </div>
+
+    <div id="step-5" class="hidden">
+        <div class="text-center py-6 max-w-lg mx-auto">
+            <div class="w-16 h-16 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">Booking Confirmed!</h1>
+            <p class="text-ak-muted text-sm mb-8">Your session has been booked. See you on the track!</p>
+
+            <div class="bg-ak-card border border-ak-border rounded-xl p-6 text-left mb-4">
+                <p class="text-white font-semibold mb-4">Booking Details</p>
+                <div class="space-y-2.5 text-sm">
+                    <div class="flex justify-between"><span class="text-ak-muted">Reference</span><span id="conf-ref" class="text-white font-mono font-bold"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Date</span><span id="conf-date" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Time</span><span id="conf-time" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Drivers</span><span id="conf-drivers" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Package</span><span id="conf-package" class="text-white font-medium"></span></div>
+                    <div class="border-t border-ak-border pt-2.5 flex justify-between">
+                        <span class="text-white font-semibold">Total Paid</span>
+                        <span id="conf-total" class="text-white font-bold text-lg"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btn-share-link" type="button"
+                        class="bg-ak-card border border-ak-border hover:border-ak-purple text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Copy Share Link
+                </button>
+                <a href="/dashboard"
+                   class="bg-ak-purple hover:bg-purple-600 text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors text-center">
+                    Go to Dashboard
+                </a>
+            </div>
+            <p id="share-copied-msg" class="hidden text-green-400 text-sm mt-3">Link copied to clipboard!</p>
+        </div>
+    </div>
+
+    <div id="step-nav" class="flex justify-between items-center mt-8">
+        <button id="btn-back" type="button"
+                class="hidden bg-ak-card border border-ak-border hover:border-ak-purple text-white font-medium text-sm px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back
+        </button>
+        <div></div>
+        <button id="btn-proceed" type="button"
+                class="bg-ak-purple hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-8 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+            Proceed
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/booking.js"></script>
 {% endblock %}

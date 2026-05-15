@@ -1,29 +1,139 @@
-{% extends "base.html" %}
 {% block title %}Dashboard - Awesome Karts{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-6 py-12">
-    <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
-    <h1 class="text-4xl font-bold text-white mb-2">
-        Welcome, {{ current_user.first_name }}
-    </h1>
-    <p class="text-ak-muted text-sm mb-10">You're logged in. The full dashboard is coming soon.</p>
+<div class="max-w-4xl mx-auto px-6 py-10">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-ak-card border border-ak-border rounded-xl p-6">
-            <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
-            <p class="text-white font-bold text-lg mb-1">Account</p>
-            <p class="text-ak-muted text-sm">{{ current_user.email }}</p>
+    <div class="mb-10">
+        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+        <h1 class="text-4xl font-bold text-white">Welcome, {{ current_user.first_name }}</h1>
+    </div>
+
+    <section class="mb-12">
+        <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-xl font-bold text-white">Your Upcoming Bookings</h2>
+            <a href="/bookings" class="bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">+ New Booking</a>
         </div>
-        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
-            <div class="w-6 h-0.5 bg-ak-purple mb-4"></div>
-            <p class="text-white font-bold text-lg mb-1">Sign Out</p>
-            <p class="text-ak-muted text-sm mb-4">End your session.</p>
-            <button type="button" data-logout
-                    class="mt-auto self-start bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-                Log Out
+
+        <div id="bookings-loading" class="text-ak-muted text-sm py-4">Loading bookings…</div>
+
+        <div id="bookings-empty" class="hidden bg-ak-card border border-ak-border rounded-xl p-8 text-center">
+            <p class="text-ak-muted text-sm mb-4">You have no upcoming bookings yet.</p>
+            <a href="/bookings" class="bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors">Book Now</a>
+        </div>
+
+        <div id="bookings-list" class="space-y-3 hidden"></div>
+    </section>
+
+    <section class="mb-12">
+        <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+        <h2 class="text-xl font-bold text-white mb-1">Your Minors</h2>
+        <p class="text-ak-muted text-sm mb-5">Register children under 18 so they can join your bookings.</p>
+
+        <div id="minors-loading" class="text-ak-muted text-sm py-4">Loading…</div>
+        <div id="minors-list" class="space-y-3 hidden mb-4"></div>
+
+        <button id="btn-add-minor" type="button"
+                class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors hidden flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add a Minor
+        </button>
+
+        <div id="add-minor-form-wrapper" class="hidden mt-4 bg-ak-card border border-ak-border rounded-xl p-6 max-w-lg">
+            <p class="text-white font-semibold text-sm mb-4">Add a Minor</p>
+            <form id="add-minor-form" class="space-y-4" novalidate>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="minor-first" class="block text-white text-xs font-medium mb-1">First Name</label>
+                        <input id="minor-first" name="first_name" type="text" required
+                               class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    </div>
+                    <div>
+                        <label for="minor-last" class="block text-white text-xs font-medium mb-1">Last Name</label>
+                        <input id="minor-last" name="last_name" type="text" required
+                               class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="minor-gender" class="block text-white text-xs font-medium mb-1">Gender</label>
+                        <select id="minor-gender" name="gender" required
+                                class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                            <option value="">Select…</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                            <option value="prefer_not_to_say">Prefer not to say</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="minor-dob" class="block text-white text-xs font-medium mb-1">Date of Birth</label>
+                        <input id="minor-dob" name="dob" type="date" required aria-label="Minor date of birth"
+                               class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors ak-date-input">
+                    </div>
+                </div>
+                <p id="add-minor-error" class="hidden text-sm text-red-400"></p>
+                <div class="flex gap-3">
+                    <button type="submit"
+                            class="bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">
+                        Add Minor
+                    </button>
+                    <button type="button" id="btn-cancel-minor"
+                            class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="mb-12">
+        <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+        <h2 class="text-xl font-bold text-white mb-1">Waivers</h2>
+        <p class="text-ak-muted text-sm mb-5">Everyone driving must have a signed waiver before their session.</p>
+
+        <div id="waivers-loading" class="text-ak-muted text-sm py-4">Loading…</div>
+        <div id="waivers-container" class="hidden bg-ak-card border border-ak-border rounded-xl divide-y divide-ak-border"></div>
+    </section>
+
+</div>
+
+<div id="waiver-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
+    <div class="bg-ak-card border border-ak-border rounded-xl p-6 w-full max-w-lg">
+        <h3 id="waiver-modal-title" class="text-white font-bold text-lg mb-4">Sign Waiver</h3>
+        <div class="bg-black bg-opacity-40 border border-ak-border rounded-lg p-4 mb-4 h-40 overflow-y-auto text-ak-muted text-sm leading-relaxed">
+            <p id="waiver-guardian-note" class="hidden text-ak-purple text-xs font-semibold mb-2"></p>
+            <p>By signing this waiver, you acknowledge and agree to the following:</p>
+            <br>
+            <p>Karting is a motorsport activity that carries inherent risks. Participants may be exposed to risks including, but not limited to, physical injury, property damage, or death. Awesome Karts Pty Ltd takes all reasonable precautions to minimise these risks.</p>
+            <br>
+            <p>You agree to follow all track rules and instructions from staff at all times. Failure to comply may result in removal from the facility without refund. You confirm that you are in good physical health and are not aware of any medical condition that would prevent you from safely participating.</p>
+            <br>
+            <p>This waiver is governed by the laws of New South Wales, Australia. By signing, you waive any claims against Awesome Karts Pty Ltd, its employees, agents, and contractors to the fullest extent permitted by law.</p>
+        </div>
+        <label class="flex items-start gap-3 mb-5 cursor-pointer">
+            <input type="checkbox" id="waiver-agree-checkbox"
+                   class="mt-0.5 w-4 h-4 accent-ak-purple flex-shrink-0">
+            <span id="waiver-agree-label" class="text-white text-sm">I have read and agree to the terms of this waiver.</span>
+        </label>
+        <p id="waiver-modal-error" class="hidden text-sm text-red-400 mb-3"></p>
+        <div class="flex gap-3">
+            <button id="btn-sign-waiver" type="button"
+                    class="bg-ak-purple hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors"
+                    disabled>
+                Sign
+            </button>
+            <button id="btn-cancel-waiver" type="button"
+                    class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+                Cancel
             </button>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}

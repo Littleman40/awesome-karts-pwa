@@ -72,7 +72,13 @@
                 return;                                                                                     // stops rest of function
             }
 
-            var loginResult = await fnPostJSON("/api/auth/login", { email: emailInputValue, password: passwordInputValue });    // sends email and password to server and waits for response
+            var nextUrlField = loginFormElement.querySelector("[data-next-url]");                           // hidden field set by Jinja from ?next=... query param, see login.html
+            var loginNextUrl = nextUrlField ? nextUrlField.value : "/dashboard";
+            if (!loginNextUrl || !loginNextUrl.startsWith("/")) {                                           // only allow same-origin paths, server enforces this too but defence in depth
+                loginNextUrl = "/dashboard";
+            }
+
+            var loginResult = await fnPostJSON("/api/auth/login", { email: emailInputValue, password: passwordInputValue, next: loginNextUrl });    // sends email and password to server
             if (loginResult.data && loginResult.data.success) {                                             // if login successful
                 var loginRedirectUrl = "/dashboard";
                 if (loginResult.data.data && loginResult.data.data.redirect) {                              // redirect to location from server or dashboard as backup
@@ -115,6 +121,12 @@
                 return;
             }
 
+            var regNextUrlField = registerFormElement.querySelector("[data-next-url]");                      // same trick as login, preserves ?next=... through registration
+            var regNextUrl = regNextUrlField ? regNextUrlField.value : "/dashboard";
+            if (!regNextUrl || !regNextUrl.startsWith("/")) {                                                // only allow same-origin paths prevents open-redirect attacks
+                regNextUrl = "/dashboard";
+            }
+
             var registrationPayload = {                                                                     // creates payload to send to server
                 first_name: registerFormElement.first_name.value.trim(),
                 last_name: registerFormElement.last_name.value.trim(),
@@ -123,7 +135,8 @@
                 address: registerFormElement.address.value.trim(),
                 phone: registerFormElement.phone.value.trim(),
                 email: registerFormElement.email.value.trim(),
-                password: passwordInputValue
+                password: passwordInputValue,
+                next: regNextUrl
             };
 
             var registerResult = await fnPostJSON("/api/auth/register", registrationPayload);               // sends payload to server
