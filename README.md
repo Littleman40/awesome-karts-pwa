@@ -5,10 +5,10 @@ This is a venue website built as my Year 12 NSW HSC Software Engineering Major P
 ## Current Features
 - [x] Static Pages
 - [x] Log In/ Register System
+- [x] User Dashboard 
+- [x] Booking System
 
 ## Planned Updates
-- [ ] User Dashboard 
-- [ ] Booking System
 - [ ] Admin Management
 - [ ] Payment System
 - [ ] Notification System
