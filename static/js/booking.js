@@ -106,6 +106,7 @@
             "high":      ["#ef4444", "#ef4444", "#ef4444", "#ef4444"],                                 // all red
             "booked_out":["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey
             "blocked":   ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey
+            "past":      ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey - hour has already passed today
         };
         var f = fills[status];
         if (!f) { f = fills["blocked"]; }                                                                       // fallback for unknown status
@@ -123,6 +124,7 @@
         if (status === "high")      { return '<span class="text-red-400 font-semibold text-xs">HIGH</span>'; }
         if (status === "booked_out"){ return '<span class="text-ak-muted font-semibold text-xs">BOOKED OUT</span>'; }
         if (status === "blocked")   { return '<span class="text-ak-muted font-semibold text-xs">CLOSED</span>'; }
+        if (status === "past")      { return '<span class="text-ak-muted font-semibold text-xs">PAST</span>'; }
         return '<span class="text-ak-muted font-semibold text-xs">CLOSED</span>';
     }
 
@@ -228,14 +230,32 @@
         }
     }
 
-    function fnUpdateDateDisplay(dateString) {                                                                  // shows the long-format date underneath the picker once one is chosen
+    function fnDayOrdinal(n) {                                                                                  // converts a day number into 1st/2nd/3rd/4th etc
+        var lastTwo = n % 100;
+        if (lastTwo >= 11 && lastTwo <= 13) { return "th"; }                                                    // 11th, 12th, 13th are exceptions to the usual st/nd/rd rule
+        var last = n % 10;
+        if (last === 1) { return "st"; }
+        if (last === 2) { return "nd"; }
+        if (last === 3) { return "rd"; }
+        return "th";
+    }
+
+    function fnFormatDateNoYear(dateString) {                                                                   // "Tuesday 26th May" - used in the calendar header to show the selected date
+        var parts = dateString.split("-");
+        var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        var days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        var n = d.getDate();
+        return days[d.getDay()] + " " + n + fnDayOrdinal(n) + " " + months[d.getMonth()];
+    }
+
+    function fnUpdateDateDisplay(dateString) {                                                                  // shows the selected date in the calendar header (right side)
         var displayEl = document.getElementById("date-display");
         if (!displayEl) { return; }
         if (dateString) {
-            displayEl.textContent = fnFormatDateLong(dateString);
-            displayEl.classList.remove("hidden");
+            displayEl.textContent = fnFormatDateNoYear(dateString);
         } else {
-            displayEl.classList.add("hidden");
+            displayEl.textContent = "";
         }
     }
 
@@ -252,23 +272,32 @@
         }
     }
 
+    function fnRenderSkeletonSlots(count) {                                                                     // renders grey placeholder buttons so the slot card holds its size while loading
+        var containerEl = document.getElementById("slots-container");
+        if (!containerEl) { return; }
+        containerEl.innerHTML = "";
+        var rows = Math.ceil(count / 2);
+        containerEl.style.gridAutoFlow   = "column";                                                            // match the real layout so the swap-in is seamless
+        containerEl.style.gridTemplateRows = "repeat(" + rows + ", auto)";
+        for (var i = 0; i < count; i++) {
+            var skel = document.createElement("div");
+            skel.className = "w-full rounded-xl border-2 border-ak-border bg-ak-card animate-pulse";
+            skel.style.height = "52px";                                                                         // matches a real slot button's outer height (py-3 + line)
+            containerEl.appendChild(skel);
+        }
+    }
+
     function fnRenderSlots(slotData) {                                                                          // takes the result from fnFetchSlots and paints the slots grid
-        var loadingEl  = document.getElementById("slots-loading");
         var blockedEl  = document.getElementById("slots-blocked");
-        var emptyEl    = document.getElementById("slots-empty");
-        var gridEl     = document.getElementById("slots-grid");
         var containerEl = document.getElementById("slots-container");
 
-        if (loadingEl)  { loadingEl.classList.add("hidden"); }
         if (blockedEl)  { blockedEl.classList.add("hidden"); }
-        if (emptyEl)    { emptyEl.classList.add("hidden"); }
-        if (gridEl)     { gridEl.classList.add("hidden"); }
+        if (!containerEl) { return; }
 
-        if (!slotData) {
-            if (emptyEl) {
-                emptyEl.textContent = "Could not load times. Please try again.";
-                emptyEl.classList.remove("hidden");
-            }
+        if (!slotData) {                                                                                        // network or api failure
+            containerEl.innerHTML = '<p class="text-red-400 text-sm" style="grid-column: 1 / -1;">Could not load times. Please try again.</p>';
+            containerEl.style.gridAutoFlow   = "row";
+            containerEl.style.gridTemplateRows = "";
             return;
         }
 
@@ -278,24 +307,36 @@
             if (!reason) { reason = "This date is not available for bookings."; }
             if (reasonEl) { reasonEl.textContent = reason; }
             if (blockedEl) { blockedEl.classList.remove("hidden"); }
+            containerEl.innerHTML = "";                                                                         // clear so the card collapses to just the blocked notice
+            containerEl.style.gridAutoFlow   = "row";
+            containerEl.style.gridTemplateRows = "";
             return;
         }
 
         var slots = slotData.slots;
         if (!slots || slots.length === 0) {                                                                     // shouldnt normally happen but defend against it
-            if (emptyEl) {
-                emptyEl.textContent = "No time slots available for this date.";
-                emptyEl.classList.remove("hidden");
-            }
+            containerEl.innerHTML = '<p class="text-ak-muted text-sm" style="grid-column: 1 / -1;">No time slots available for this date.</p>';
+            containerEl.style.gridAutoFlow   = "row";
+            containerEl.style.gridTemplateRows = "";
             return;
         }
 
-        if (!containerEl) { return; }
         containerEl.innerHTML = "";                                                                             // clear old slot buttons before painting new ones
+
+        var todayIsoForSlots = fnFormatDateISO(fnGetTodayDate());                                                // mark hours already past on todays date as unavailable
+        var isTodaySelected = (bookingState.date === todayIsoForSlots);
+        var nowForSlots = new Date();
 
         for (var i = 0; i < slots.length; i++) {
             var slot = slots[i];
-            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked";                        // these statuses are "click does nothing"
+            if (isTodaySelected) {                                                                              // override status if the hour has already started today
+                var dateParts = bookingState.date.split("-");
+                var slotStart = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10), slot.hour, 0, 0);
+                if (slotStart <= nowForSlots) {
+                    slot.status = "past";
+                }
+            }
+            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked" && slot.status !== "past";    // these statuses are "click does nothing"
             var isSelected  = bookingState.timeSlot === slot.hour;                                              // highlight the previously-selected slot if user already picked one
 
             var btn = document.createElement("button");
@@ -324,7 +365,9 @@
             containerEl.appendChild(btn);
         }
 
-        if (gridEl) { gridEl.classList.remove("hidden"); }
+        var rowCount = Math.ceil(slots.length / 2);                                                             // column-major flow - first half fills col 1 top-to-bottom, second half col 2
+        containerEl.style.gridAutoFlow   = "column";
+        containerEl.style.gridTemplateRows = "repeat(" + rowCount + ", auto)";
     }
 
     function fnOnSlotSelect(hour) {                                                                             // user clicked a slot, update state and re-style the buttons
@@ -347,67 +390,174 @@
         fnSaveState();                                                                                          // persist in case of refresh / login redirect
     }
 
-    async function fnOnDateChange() {                                                                           // fired when the user picks a date in the <input type="date">
-        var input = document.getElementById("date-input");
-        if (!input) { return; }
-        var dateValue = input.value;
-        bookingState.date     = dateValue;
-        bookingState.timeSlot = null;                                                                           // changing the date clears any previously-selected slot
-        fnUpdateDateDisplay(dateValue);
-        fnUpdateProceedButton();
-        fnSaveState();
+    var BOOKING_WINDOW_DAYS = 90;                                                                               // how far ahead users can book - ~3 months
+    var calendarMonthOffset = 0;                                                                                // 0 = today's month, 1 = next month, etc
 
-        if (!dateValue) { return; }                                                                             // user cleared the input
+    function fnGetTodayDate() {                                                                                 // local-time today at midnight, used everywhere we compare dates
+        var d = new Date();
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
 
-        var loadingEl = document.getElementById("slots-loading");
-        var gridEl    = document.getElementById("slots-grid");
-        var emptyEl   = document.getElementById("slots-empty");
-        var blockedEl = document.getElementById("slots-blocked");
+    function fnGetMaxBookingDate() {                                                                            // last allowed booking date (today + window)
+        var d = fnGetTodayDate();
+        d.setDate(d.getDate() + BOOKING_WINDOW_DAYS);
+        return d;
+    }
 
-        if (loadingEl)  { loadingEl.classList.remove("hidden"); }
-        if (gridEl)     { gridEl.classList.add("hidden"); }
-        if (emptyEl)    { emptyEl.classList.add("hidden"); }
-        if (blockedEl)  { blockedEl.classList.add("hidden"); }
+    function fnFormatDateISO(d) {                                                                               // YYYY-MM-DD in local time (not UTC) so it matches what the user sees
+        function fnPad(n) { return n < 10 ? "0" + n : "" + n; }
+        return d.getFullYear() + "-" + fnPad(d.getMonth() + 1) + "-" + fnPad(d.getDate());
+    }
 
-        var result = await fnFetchSlots(dateValue);
-        if (loadingEl) { loadingEl.classList.add("hidden"); }
+    function fnParseDateISO(dateString) {                                                                       // YYYY-MM-DD string -> local-time Date at midnight
+        var parts = dateString.split("-");
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
 
-        if (!result || !result.success) {                                                                       // either the network call failed or the API returned an error
-            fnRenderSlots(null);
-        } else {
-            fnRenderSlots(result.data);                                                                         // result.data is {blocked, reason?, slots?}
+    function fnRenderCalendar() {                                                                               // paints the current month into #cal-grid - called on init and on month nav
+        var titleEl = document.getElementById("cal-title");
+        var gridEl  = document.getElementById("cal-grid");
+        var prevBtn = document.getElementById("cal-prev");
+        var nextBtn = document.getElementById("cal-next");
+        if (!titleEl || !gridEl) { return; }
+
+        var today   = fnGetTodayDate();
+        var maxDate = fnGetMaxBookingDate();
+
+        var viewYear  = today.getFullYear();                                                                    // resolve "current month + offset" into a concrete year/month
+        var viewMonth = today.getMonth() + calendarMonthOffset;
+        var firstOfMonth = new Date(viewYear, viewMonth, 1);                                                    // js normalises overflow (eg month=13 -> next year, month=1)
+        viewYear  = firstOfMonth.getFullYear();
+        viewMonth = firstOfMonth.getMonth();
+
+        var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        titleEl.textContent = monthNames[viewMonth];                                                             // year is shown via the selected-date display on the right, no need to duplicate
+
+        if (prevBtn) { prevBtn.disabled = (calendarMonthOffset <= 0); }                                          // cant go before todays month
+        if (nextBtn) {
+            var nextMonthFirst = new Date(viewYear, viewMonth + 1, 1);
+            nextBtn.disabled = (nextMonthFirst > maxDate);                                                       // hide further months once entirely past the booking window
+        }
+
+        gridEl.innerHTML = "";
+
+        var firstDow      = new Date(viewYear, viewMonth, 1).getDay();                                           // 0 = Sunday, used to add leading blank cells
+        var daysInMonth   = new Date(viewYear, viewMonth + 1, 0).getDate();                                      // day 0 of next month = last day of this month
+
+        for (var b = 0; b < firstDow; b++) {                                                                     // empty cells before day 1 so the calendar aligns to the right weekday column
+            var blank = document.createElement("div");
+            blank.className = "h-9";
+            gridEl.appendChild(blank);
+        }
+
+        for (var day = 1; day <= daysInMonth; day++) {
+            var dayDate  = new Date(viewYear, viewMonth, day);
+            var dayIso   = fnFormatDateISO(dayDate);
+            var disabled = (dayDate < today) || (dayDate > maxDate);                                             // past or beyond the 3-month window - admin-blocked days will plug in here later
+            var selected = (bookingState.date === dayIso);
+            var isToday  = (dayDate.getTime() === today.getTime());
+
+            var cell = document.createElement("button");
+            cell.type = "button";
+            cell.textContent = day;
+            cell.setAttribute("data-date", dayIso);
+
+            var baseClass = "h-9 rounded-lg text-sm font-medium flex items-center justify-center transition-colors";
+            if (disabled) {
+                cell.className = baseClass + " text-ak-hint cursor-not-allowed opacity-40";
+                cell.disabled = true;
+            } else if (selected) {
+                cell.className = baseClass + " bg-ak-purple text-white";
+            } else if (isToday) {
+                cell.className = baseClass + " bg-ak-border text-white hover:bg-ak-purple cursor-pointer";        // today gets a subtle outline-style bg before selection
+            } else {
+                cell.className = baseClass + " text-white hover:bg-ak-border cursor-pointer";
+            }
+
+            if (!disabled) {
+                (function (iso) {
+                    cell.addEventListener("click", function () { fnSelectCalendarDate(iso); });
+                }(dayIso));
+            }
+            gridEl.appendChild(cell);
         }
     }
 
-    function fnInitStep2() {                                                                                    // sets up the date input 
-        var input = document.getElementById("date-input");
-        if (!input) { return; }
+    function fnSelectCalendarDate(dateIso) {                                                                    // user clicked a day cell - persist, refresh ui, reload slots
+        bookingState.date     = dateIso;
+        bookingState.timeSlot = null;                                                                           // any previously chosen slot is now meaningless on a new date
+        fnUpdateDateDisplay(dateIso);
+        fnRenderCalendar();                                                                                     // re-render so the new cell shows selected
+        fnUpdateProceedButton();
+        fnSaveState();
+        fnLoadSlotsForDate(dateIso);
+    }
 
-        var today = new Date();
-        var maxDate = new Date(today);
-        maxDate.setDate(maxDate.getDate() + 60);                                                                // can only book up to 60 days ahead
+    async function fnLoadSlotsForDate(dateIso) {                                                                // fetches /api/bookings/slots and paints the result - factored out so calendar clicks can call it
+        var containerEl = document.getElementById("slots-container");
+        var blockedEl   = document.getElementById("slots-blocked");
 
-        function fnPad(n) { return n < 10 ? "0" + n : "" + n; }                                                 // html date inputs want zero-padded month/day
-        var todayStr = today.getFullYear() + "-" + fnPad(today.getMonth() + 1) + "-" + fnPad(today.getDate());
-        var maxStr   = maxDate.getFullYear() + "-" + fnPad(maxDate.getMonth() + 1) + "-" + fnPad(maxDate.getDate());
+        if (blockedEl) { blockedEl.classList.add("hidden"); }
 
-        input.setAttribute("min", todayStr);                                                                    // browser will disable past dates in the picker (server still re-validates)
-        input.setAttribute("max", maxStr);                                                                      // and dates more than 60 days away
-
-        if (bookingState.date) {                                                                                // user already picked a date earlier
-            input.value = bookingState.date;
-            fnUpdateDateDisplay(bookingState.date);
-            fnOnDateChange();
-        } else {
-            var emptyEl = document.getElementById("slots-empty");
-            if (emptyEl) {
-                emptyEl.textContent = "Select a date above to see available times.";
-                emptyEl.classList.remove("hidden");
+        if (containerEl) {                                                                                      // first paint? show skeletons. otherwise leave prior buttons in place so the card doesnt collapse
+            var hasPriorButtons = containerEl.querySelector("button") !== null;
+            if (!hasPriorButtons) {
+                fnRenderSkeletonSlots(11);                                                                      // 11 placeholders matches the typical opening-hours range
             }
+            containerEl.classList.add("opacity-50", "pointer-events-none");                                     // dim whatevers currently visible so the user sees its loading
         }
 
-        input.removeEventListener("change", fnOnDateChange);
-        input.addEventListener("change", fnOnDateChange);
+        var result = await fnFetchSlots(dateIso);
+
+        if (!result || !result.success) {
+            fnRenderSlots(null);
+        } else {
+            fnRenderSlots(result.data);
+        }
+
+        if (containerEl) {
+            containerEl.classList.remove("opacity-50", "pointer-events-none");
+        }
+    }
+
+    function fnInitStep2() {                                                                                    // wires up the calendar widget and pre-selects today if no date is set
+        var today    = fnGetTodayDate();
+        var maxDate  = fnGetMaxBookingDate();
+        var todayIso = fnFormatDateISO(today);
+
+        if (bookingState.date) {                                                                                // throw away saved dates that are outside the booking window
+            var saved = fnParseDateISO(bookingState.date);
+            if (saved < today || saved > maxDate) {
+                bookingState.date     = null;
+                bookingState.timeSlot = null;
+            }
+        }
+        if (!bookingState.date) {                                                                               // pre-select today so the user immediately sees today's slots
+            bookingState.date = todayIso;
+        }
+
+        var selDate = fnParseDateISO(bookingState.date);                                                        // align the visible month to the selected date
+        calendarMonthOffset = (selDate.getFullYear() - today.getFullYear()) * 12 + (selDate.getMonth() - today.getMonth());
+
+        var prevBtn = document.getElementById("cal-prev");
+        var nextBtn = document.getElementById("cal-next");
+        if (prevBtn) {
+            prevBtn.onclick = function () {                                                                     // onclick reassignment is fine - fnInitStep2 runs each time step 2 is shown
+                if (calendarMonthOffset > 0) { calendarMonthOffset--; fnRenderCalendar(); }
+            };
+        }
+        if (nextBtn) {
+            nextBtn.onclick = function () {
+                var t = fnGetTodayDate();
+                var mx = fnGetMaxBookingDate();
+                var nextFirst = new Date(t.getFullYear(), t.getMonth() + calendarMonthOffset + 1, 1);
+                if (nextFirst <= mx) { calendarMonthOffset++; fnRenderCalendar(); }
+            };
+        }
+
+        fnRenderCalendar();
+        fnUpdateDateDisplay(bookingState.date);
+        fnLoadSlotsForDate(bookingState.date);
     }
 
     function fnUpdateSummary() {
