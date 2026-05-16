@@ -22,7 +22,7 @@
         <div class="space-y-3 text-sm">
             <div class="flex justify-between">
                 <span class="text-ak-muted">Reference</span>
-                <span class="text-white font-mono font-bold">{{ str(booking['_id'])[-6:].upper() }}</span>
+                <span class="text-white font-mono font-bold">{{ (booking['_id']|string)[-6:].upper() }}</span>
             </div>
             <div class="flex justify-between">
                 <span class="text-ak-muted">Date</span>
@@ -69,7 +69,11 @@
         </div>
     </div>
 
-    {% if current_user %}
+    {% if current_user and is_linked %}
+        <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-4">
+            <p class="text-green-400 text-sm">This booking is already on your account.</p>
+        </div>
+    {% elif current_user %}
         <div id="add-status" class="bg-ak-card border border-ak-border rounded-xl px-5 py-4 mb-4">
             <p class="text-ak-muted text-sm mb-3">Add this booking to your account so you receive reminders and can view it on your dashboard.</p>
             <button id="btn-add-booking" type="button"
@@ -79,7 +83,6 @@
             <p id="add-booking-msg" class="hidden text-green-400 text-sm mt-2"></p>
             <p id="add-booking-error" class="hidden text-red-400 text-sm mt-2"></p>
         </div>
-        <a href="/dashboard" class="text-ak-muted text-sm hover:text-white underline transition-colors">Go to Dashboard</a>
     {% else %}
         <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-4">
             <p class="text-ak-muted text-sm mb-3">Log in to add this booking to your account.</p>
@@ -92,7 +95,6 @@
 
     {% endif %}
 </div>
-{% endblock %}
 
 <script>
     (function () {
@@ -133,5 +135,4 @@
         });
     })();
 </script>
-{% endif %}
 {% endblock %}

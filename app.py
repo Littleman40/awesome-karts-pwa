@@ -1,4 +1,5 @@
 from flask import Flask, render_template, send_from_directory, session, redirect
+from bson import ObjectId
 
 from config import Config
 from extensions import mongo
@@ -77,7 +78,20 @@ def fn_create_app():
     @app.route("/bookings/share/<share_token>")                                                 # public share page / anyone with the link can see the booking details
     def fn_booking_share(share_token):
         booking = fn_find_booking_by_share_token(mongo, share_token)                            # booking can be None / template handles the "not found" state
-        return render_template("bookings_share.html", booking=booking, share_token=share_token) # token also passed so the template can build the /login?next=... back-link
+        is_linked = False                                                                       # whether the currently-logged-in user is already on this booking
+        if booking is not None and "user_id" in session:
+            try:
+                current_user_object_id = ObjectId(session["user_id"])
+                if current_user_object_id in booking.get("linked_user_ids", []):                # already linked - dont show the Add button
+                    is_linked = True
+            except Exception:
+                is_linked = False                                                               # if the session user_id is malformed just treat them as not linked
+        return render_template(                                                                 # token also passed so the template can build the /login?next=... back-link
+            "bookings_share.html",
+            booking=booking,
+            share_token=share_token,
+            is_linked=is_linked,
+        )
 
     @app.route("/refund-policy")
     def fn_refund_policy():
