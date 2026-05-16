@@ -1,9 +1,7 @@
-var CACHE_NAME = "awesomekart-pwa-v1";                                  // service worker for caching
+var CACHE_NAME = "dev-cache";                                  // service worker for caching
 var CACHED_ASSETS = [                                                   // cached items
-    "/",
     "/static/icons/icon-dark-2000.png",
     "/static/icons/icon-light-2000.png",
-    "/static/css/style.css",
     "/static/js/app.js",
     "/static/manifest.json",
     "/static/img/kart-jnr.png",
