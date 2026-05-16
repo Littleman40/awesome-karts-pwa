@@ -82,9 +82,10 @@
                 Create Account
             </button>
 
+            {% set _next = request.args.get('next', '') %}
             <p class="text-center text-ak-muted text-sm">
                 Already have an account?
-                <a href="/login" class="text-ak-purple hover:text-purple-400 underline">Log in</a>
+                <a href="/login{% if _next %}?next={{ _next | urlencode }}{% endif %}" class="text-ak-purple hover:text-purple-400 underline">Log in</a>
             </p>
         </form>
     </div>

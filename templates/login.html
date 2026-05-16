@@ -26,9 +26,10 @@
             </button>
 
             <div class="text-center space-y-2">
+                {% set _next = request.args.get('next', '') %}
                 <p class="text-ak-muted text-sm">
                     Don't have an account?
-                    <a href="/register" class="text-ak-purple hover:text-purple-400 underline">Register here</a>
+                    <a href="/register{% if _next %}?next={{ _next | urlencode }}{% endif %}" class="text-ak-purple hover:text-purple-400 underline">Register here</a>
                 </p>
                 <a href="#" class="block text-ak-muted text-sm hover:text-white underline transition-colors">Forgot password?</a>
             </div>
