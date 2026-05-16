@@ -181,11 +181,11 @@
     </div>
 
     <div id="step-3" class="hidden">
-        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
-        <h1 class="text-3xl font-bold text-white mb-2">Sign In to Continue</h1>
-        <p class="text-ak-muted text-sm mb-8">You need to be logged in to complete your booking.</p>
+        <div class="max-w-md mx-auto">
+            <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+            <h1 class="text-3xl font-bold text-white mb-2">Sign In to Continue</h1>
+            <p class="text-ak-muted text-sm mb-8">You need to be logged in to complete your booking.</p>
 
-        <div class="max-w-md">
             <div class="bg-ak-card border border-ak-border rounded-xl p-6">
                 <form id="booking-login-form" class="space-y-4" novalidate>
                     <div>
@@ -216,28 +216,30 @@
 
 
     <div id="step-4" class="hidden">
-        <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
-        <h1 class="text-3xl font-bold text-white mb-6">Confirm Your Booking</h1>
+        <div class="max-w-lg mx-auto">
+            <div class="w-8 h-0.5 bg-ak-purple mb-4"></div>
+            <h1 class="text-3xl font-bold text-white mb-6">Confirm Your Booking</h1>
 
-        <div class="bg-ak-card border border-ak-border rounded-xl p-6 mb-4 max-w-lg">
-            <p class="text-white font-semibold mb-4">Booking Summary</p>
-            <div class="space-y-2.5 text-sm">
-                <div class="flex justify-between"><span class="text-ak-muted">Date</span><span id="summary-date" class="text-white font-medium"></span></div>
-                <div class="flex justify-between"><span class="text-ak-muted">Time</span><span id="summary-time" class="text-white font-medium"></span></div>
-                <div class="flex justify-between"><span class="text-ak-muted">Drivers</span><span id="summary-drivers" class="text-white font-medium"></span></div>
-                <div class="flex justify-between"><span class="text-ak-muted">Package</span><span id="summary-package" class="text-white font-medium"></span></div>
-                <div class="border-t border-ak-border pt-2.5 flex justify-between">
-                    <span class="text-white font-semibold">Total</span>
-                    <span id="summary-total" class="text-white font-bold text-lg"></span>
+            <div class="bg-ak-card border border-ak-border rounded-xl p-6 mb-4">
+                <p class="text-white font-semibold mb-4">Booking Summary</p>
+                <div class="space-y-2.5 text-sm">
+                    <div class="flex justify-between"><span class="text-ak-muted">Date</span><span id="summary-date" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Time</span><span id="summary-time" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Drivers</span><span id="summary-drivers" class="text-white font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-ak-muted">Package</span><span id="summary-package" class="text-white font-medium"></span></div>
+                    <div class="border-t border-ak-border pt-2.5 flex justify-between">
+                        <span class="text-white font-semibold">Total</span>
+                        <span id="summary-total" class="text-white font-bold text-lg"></span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-4 max-w-lg">
-            <p class="text-ak-muted text-sm">Payment processing will be added in the final version. Your booking will be confirmed immediately.</p>
-        </div>
+            <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-4">
+                <p class="text-ak-muted text-sm">Payment processing will be added in the final version. Your booking will be confirmed immediately.</p>
+            </div>
 
-        <p id="payment-error" class="hidden text-sm text-red-400 mb-3"></p>
+            <p id="payment-error" class="hidden text-sm text-red-400 mb-3"></p>
+        </div>
     </div>
 
     <div id="step-5" class="hidden">
