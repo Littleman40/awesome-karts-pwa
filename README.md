@@ -2,6 +2,7 @@
 
 This is a venue website built as my Year 12 NSW HSC Software Engineering Major Project. This project will allow customers to browse the site, create accounts, book karting sessions, sign waivers, and pay. With an extra admin panel for the staff administrators.
 
+
 ## Current Features
 - [x] Static Pages
 - [x] Log In/ Register System
@@ -12,6 +13,9 @@ This is a venue website built as my Year 12 NSW HSC Software Engineering Major P
 - [ ] Admin Management
 - [ ] Payment System
 - [ ] Notification System
+
+## Screenshots
+<img src="https://i.imgur.com/k5d4j7o.png" width=400> <img src="https://i.imgur.com/HSBztRV.png" width=400> <img src="https://i.imgur.com/YMDJDZW.png" width=400> <img src="https://i.imgur.com/n0y07Qv.png" width=400>
 
 ## Tech stack (so far)
 
@@ -34,6 +38,3 @@ This is a venue website built as my Year 12 NSW HSC Software Engineering Major P
    ```bash
    python app.py
    ```
-
-# Test
-<img src="https://i.imgur.com/A11s27m.png" width=400>
