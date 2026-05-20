@@ -1,6 +1,6 @@
 # Awesome Karts
 
-This is a venue website built as my Year 12 NSW HSC Software Engineering Major Project. This project will allow customers to browse the site, create accounts, book karting sessions, sign waivers, and pay. With an extra admin panel for the staff administrators.
+This is a full stack application built as my Year 12 NSW HSC Software Engineering Major Project. It will allow clients to create accounts, book karting sessions, sign up minors, complete mandatory waivers, and pay. With an extra admin panel for the staff members.
 
 
 ## Current Features
