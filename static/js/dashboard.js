@@ -298,8 +298,8 @@
             ? '<span class="text-ak-hint text-xs mt-0.5 block">' + new Date(userWaiver.waiver_accepted_at).toLocaleDateString("en-AU") + '</span>'
             : "";
         var userAction = userWaiver.waiver_accepted
-            ? '<span class="text-green-400 text-sm font-medium flex items-center gap-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Signed</span>'
-            : '<button type="button" class="open-waiver-btn bg-ak-purple hover:bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors" data-type="user">Sign now</button>';
+            ? '<span class="text-green-400 text-sm font-medium flex items-center gap-1"><img src="/static/img/tick.svg" alt="" class="w-4 h-4 invert">Signed</span>'
+            : '<button type="button" class="open-waiver-btn bg-ak-purple hover:bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors" data-type="user">Sign now</button>';
         userRow.innerHTML =
             '<div><p class="text-white text-sm font-medium">You</p>' + userSignedAt + '</div>' + userAction;
         containerEl.appendChild(userRow);
@@ -314,8 +314,8 @@
                     ? '<span class="text-ak-hint text-xs mt-0.5 block">' + new Date(m.waiver_accepted_at).toLocaleDateString("en-AU") + '</span>'
                     : "";
                 var mAction = m.waiver_accepted
-                    ? '<span class="text-green-400 text-sm font-medium flex items-center gap-1"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Signed</span>'
-                    : '<button type="button" class="open-waiver-btn bg-ak-purple hover:bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-colors" data-type="minor" data-id="' + m.id + '" data-name="' + m.name + '">Sign for ' + m.name.split(" ")[0] + '</button>';
+                    ? '<span class="text-green-400 text-sm font-medium flex items-center gap-1"><img src="/static/img/tick.svg" alt="" class="w-4 h-4 invert">Signed</span>'
+                    : '<button type="button" class="open-waiver-btn bg-ak-purple hover:bg-purple-600 text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors" data-type="minor" data-id="' + m.id + '" data-name="' + m.name + '">Sign for ' + m.name.split(" ")[0] + '</button>';
                 mRow.innerHTML =
                     '<div><p class="text-white text-sm font-medium">' + m.name + '</p>' + mSignedAt + '</div>' + mAction;
                 containerEl.appendChild(mRow);

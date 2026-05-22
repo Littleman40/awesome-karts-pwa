@@ -143,7 +143,7 @@
             if (!circle) { continue; }
             if (i < active) {
                 circle.className = "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all bg-ak-purple border-ak-purple text-white";
-                circle.innerHTML = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+                circle.innerHTML = '<img src="/static/img/tick.svg" alt="" class="w-4 h-4 invert">';
                 var label = circle.nextElementSibling;
                 if (label) { label.className = "text-xs mt-1.5 font-medium text-white text-center leading-tight"; }
                 if (line) { line.className = "h-0.5 w-12 mb-5 bg-ak-purple transition-all"; }
@@ -648,7 +648,7 @@
                 }
                 if (btn) {
                     btn.disabled     = false;
-                    btn.innerHTML    = 'Confirm Booking <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                    btn.innerHTML    = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 inline invert">';
                 }
             }
         } catch (networkErr) {
@@ -658,7 +658,7 @@
             }
             if (btn) {
                 btn.disabled     = false;
-                btn.innerHTML    = 'Confirm Booking <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                btn.innerHTML    = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 inline invert">';
             }
         }
     }
@@ -733,7 +733,7 @@
             if (backBtn)    { backBtn.classList.add("hidden"); }
             if (proceedBtn) {
                 proceedBtn.classList.remove("hidden");
-                proceedBtn.innerHTML = 'Proceed <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                proceedBtn.innerHTML = 'Proceed <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">';
             }
             fnUpdateStep1UI();
 
@@ -741,7 +741,7 @@
             if (backBtn)    { backBtn.classList.remove("hidden"); }
             if (proceedBtn) {
                 proceedBtn.classList.remove("hidden");
-                proceedBtn.innerHTML = 'Proceed <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                proceedBtn.innerHTML = 'Proceed <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">';
             }
             fnInitStep2();
             fnUpdateProceedButton();
@@ -755,7 +755,7 @@
             if (proceedBtn) {
                 proceedBtn.classList.remove("hidden");
                 proceedBtn.disabled = false;
-                proceedBtn.innerHTML = 'Confirm Booking <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                proceedBtn.innerHTML = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">';
             }
             fnUpdateSummary();
 
