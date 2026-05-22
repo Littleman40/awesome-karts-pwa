@@ -15,7 +15,7 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
 - [ ] Notification System
 
 ## Screenshots
-<img src="https://i.imgur.com/k5d4j7o.png" width=400> <img src="https://i.imgur.com/HSBztRV.png" width=400> <img src="https://i.imgur.com/YMDJDZW.png" width=400> <img src="https://i.imgur.com/n0y07Qv.png" width=400>
+<img src="https://i.imgur.com/QvON7qR.png" width=400> <img src="https://i.imgur.com/LV5t8Gm.png" width=400> <img src="https://i.imgur.com/t0xUBMt.png" width=400> <img src="https://i.imgur.com/s6NG25I.png" width=400>
 
 ## Tech stack (so far)
 
