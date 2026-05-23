@@ -5,7 +5,7 @@ from bson import ObjectId
 from extensions import mongo                                                    # shared mongo client (see extensions.py)
 from models import booking as booking_model                                     # used for fetching this user's bookings
 from models import minor as minor_model                                         # used for the "my minors" endpoints
-from models.user import fn_find_user_by_id                                      # used by the waiver-status endpoint to read the user doc
+from models.user import fn_find_user_by_id, fn_delete_user_account             # find_user used by the waiver-status endpoint, delete_user used by the "delete my account" endpoint
 from utils.auth_decorators import fn_login_required                             # all endpoints in this file are user-specific so they all require login
 
 
@@ -107,3 +107,14 @@ def fn_sign_minor_waiver_route(minor_id_string):
     if not signed:
         return fn_error_response("Minor not found.", 404)
     return fn_ok_response()
+
+
+@users_bp.route("/me", methods=["DELETE"])                                              # permanent account deletion - cancels (not refunds) bookings, removes minors and waivers, drops user doc
+@fn_login_required
+def fn_delete_my_account():
+    user_id = session["user_id"]
+    deleted = fn_delete_user_account(mongo, user_id)
+    if not deleted:
+        return fn_error_response("Account could not be deleted.", 400)
+    session.clear()                                                                     # log them out so the next page load doesn't try to load a deleted user
+    return fn_ok_response({"redirect": "/"})

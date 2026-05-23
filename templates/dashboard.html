@@ -100,13 +100,87 @@
         <div id="waivers-container" class="hidden bg-ak-card border border-ak-border rounded-xl divide-y divide-ak-border"></div>
     </section>
 
-    <div class="border-t border-ak-border pt-8 mt-10 flex justify-center">
-        <button type="button" data-logout
-                class="inline-flex items-center gap-2 bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-white text-sm font-medium px-6 py-2.5 rounded-full transition-colors">
-            Sign Out
-        </button>
-    </div>
+    <section class="mt-12">
+        <div class="w-6 h-0.5 bg-red-500 mb-3"></div>
+        <h2 class="text-xl font-bold text-white mb-1">Danger Zone</h2>
+        <p class="text-ak-muted text-sm mb-5">Actions here affect your account and cannot always be undone.</p>
 
+        <div class="border border-red-500/60 rounded-xl bg-red-500/5 p-6 space-y-5">
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <p class="text-white font-semibold text-sm">Sign out</p>
+                    <p class="text-ak-muted text-xs mt-0.5">End your session on this device. You can sign back in any time.</p>
+                </div>
+                <button type="button" data-logout
+                        class="shrink-0 inline-flex items-center justify-center gap-2 bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors">
+                    Sign Out
+                </button>
+            </div>
+
+            <div class="border-t border-red-500/30"></div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <p class="text-white font-semibold text-sm">Delete account</p>
+                    <p class="text-ak-muted text-xs mt-0.5">Permanently remove your account, minors, and waivers. Bookings will be cancelled and not refunded.</p>
+                </div>
+                <button id="btn-delete-account" type="button"
+                        class="shrink-0 inline-flex items-center justify-center gap-2 bg-red-900 hover:bg-red-950 border border-red-900 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors">
+                    Delete Account
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+</div>
+
+<div id="delete-account-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
+    <div class="bg-ak-card border border-red-500/60 rounded-xl p-6 w-full max-w-lg">
+        <div class="flex items-start gap-3 mb-4">
+            <div class="shrink-0 w-10 h-10 rounded-full bg-red-500/15 border border-red-500/40 flex items-center justify-center">
+                <span class="text-red-400 text-xl font-bold leading-none">!</span>
+            </div>
+            <div>
+                <h3 class="text-white font-bold text-lg">Delete your account?</h3>
+                <p class="text-ak-muted text-xs mt-0.5">This action is permanent and cannot be reversed.</p>
+            </div>
+        </div>
+
+        <div class="bg-black bg-opacity-40 border border-red-500/30 rounded-lg p-4 mb-4 text-sm leading-relaxed space-y-3">
+            <p class="text-white font-semibold">Warning: You are about to delete your account.</p>
+            <p class="text-ak-muted">If you continue, the following will happen immediately:</p>
+            <ul class="text-ak-muted text-xs space-y-1.5 pl-4 list-disc">
+                <li>Your account, profile and login will be permanently removed.</li>
+                <li>All minors registered under your account will be deleted.</li>
+                <li>All waivers signed by you or for your minors will be removed.</li>
+                <li>Any upcoming bookings you created will be <span class="text-red-400 font-semibold">cancelled, NOT refunded</span>.</li>
+                <li>You will be removed from any bookings shared with you.</li>
+            </ul>
+            <p class="text-ak-muted text-xs">This cannot be undone. If you change your mind later, you will need to create a new account from scratch.</p>
+        </div>
+
+        <label class="flex items-start gap-3 mb-5 cursor-pointer">
+            <input type="checkbox" id="delete-account-confirm-checkbox"
+                   class="mt-0.5 w-4 h-4 accent-red-500 flex-shrink-0">
+            <span class="text-white text-sm">I understand that this is permanent and my bookings will not be refunded.</span>
+        </label>
+
+        <p id="delete-account-error" class="hidden text-sm text-red-400 mb-3"></p>
+
+        <div class="flex gap-3">
+            <button id="btn-confirm-delete-account" type="button"
+                    class="bg-red-900 hover:bg-red-950 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm px-5 py-2.5 rounded-full transition-colors"
+                    disabled>
+                Delete My Account
+            </button>
+            <button id="btn-cancel-delete-account" type="button"
+                    class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2.5 rounded-full transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
 </div>
 
 <div id="waiver-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">

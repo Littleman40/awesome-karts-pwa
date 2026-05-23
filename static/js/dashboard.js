@@ -441,9 +441,76 @@
     }
 
 
+    function fnSetupDeleteAccount() {                                                                           // wires up the danger-zone "Delete Account" flow: open modal -> tick checkbox -> confirm -> DELETE /api/users/me
+        var openBtn      = document.getElementById("btn-delete-account");
+        var modal        = document.getElementById("delete-account-modal");
+        var checkbox     = document.getElementById("delete-account-confirm-checkbox");
+        var confirmBtn   = document.getElementById("btn-confirm-delete-account");
+        var cancelBtn    = document.getElementById("btn-cancel-delete-account");
+        var errorEl      = document.getElementById("delete-account-error");
+
+        function fnCloseDeleteModal() {                                                                         // reset modal state every time it closes so reopening is clean
+            if (modal)    { modal.classList.add("hidden"); }
+            if (checkbox) { checkbox.checked = false; }
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = "Delete My Account";
+            }
+            if (errorEl)  { errorEl.classList.add("hidden"); errorEl.textContent = ""; }
+        }
+
+        if (openBtn && modal) {
+            openBtn.addEventListener("click", function () {
+                if (checkbox)   { checkbox.checked = false; }                                                   // always force the user to re-tick the acknowledgement each time they open the modal
+                if (confirmBtn) { confirmBtn.disabled = true; }
+                if (errorEl)    { errorEl.classList.add("hidden"); }
+                modal.classList.remove("hidden");
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener("click", fnCloseDeleteModal);
+        }
+
+        if (modal) {                                                                                            // backdrop click closes - same pattern as the waiver modal
+            modal.addEventListener("click", function (e) {
+                if (e.target === modal) { fnCloseDeleteModal(); }
+            });
+        }
+
+        if (checkbox && confirmBtn) {                                                                           // confirm button stays disabled until the acknowledgement checkbox is ticked
+            checkbox.addEventListener("change", function () {
+                confirmBtn.disabled = !checkbox.checked;
+            });
+        }
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener("click", async function () {
+                if (!checkbox || !checkbox.checked) { return; }                                                 // belt-and-braces: the button should already be disabled, but double-check
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = "Deleting…";
+                if (errorEl) { errorEl.classList.add("hidden"); }
+
+                var result = await fnDeleteJSON("/api/users/me");
+                if (result.success) {
+                    var redirectUrl = "/";                                                                      // server sends "/" but fall back just in case
+                    if (result.data && result.data.redirect) { redirectUrl = result.data.redirect; }
+                    window.location.href = redirectUrl;
+                } else {
+                    var errMsg = "Something went wrong. Please try again.";
+                    if (result.error) { errMsg = result.error; }
+                    if (errorEl) { errorEl.textContent = errMsg; errorEl.classList.remove("hidden"); }
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "Delete My Account";
+                }
+            });
+        }
+    }
+
     function fnInit() {                                                                                         // entry point - loads at first
         fnSetupAddMinorForm();                                                                                  // wires up the add/remove minor form
         fnSetupWaiverModal();                                                                                   // wires up the waiver modal once (its content gets re-skinned each time it opens)
+        fnSetupDeleteAccount();                                                                                 // wires up the danger-zone Delete Account button + confirmation modal
         fnLoadDashboard();                                                                                      // initial data fetch + render
     }
 

@@ -54,3 +54,43 @@ def fn_create_user(mongo, cleaned_user_data):                           # create
     }
     insert_result = fn_get_users_collection(mongo).insert_one(new_user_document)        # inserts into the db
     return str(insert_result.inserted_id)                                               # returns the userid used for session cookies
+
+
+def fn_delete_user_account(mongo, user_id_string):                                      # full account deletion: cancels bookings (no refund), frees slot capacity, removes minors, deletes user
+    try:
+        user_object_id = ObjectId(user_id_string)
+    except Exception:
+        return False                                                                    # invalid id = nothing to delete
+
+    bookings_collection = mongo.db.bookings
+    slots_collection = mongo.db.slots
+
+    created_bookings = list(bookings_collection.find({                                  # find every booking this user created so we can cancel them and free slot capacity
+        "creator_user_id": user_object_id,
+        "payment_status": {"$nin": ["cancelled", "refunded"]},                          # don't double-cancel ones already cancelled/refunded
+    }))
+
+    for booking in created_bookings:
+        total_drivers = booking.get("total_drivers", 0)
+        booking_date = booking.get("date")
+        time_slot = booking.get("time_slot")
+        if total_drivers > 0 and booking_date is not None and time_slot is not None:
+            slots_collection.update_one(                                                # give the slot capacity back so the time becomes bookable again
+                {"date": booking_date, "hour": time_slot},
+                {"$inc": {"booked_count": -total_drivers}},
+            )
+
+    if created_bookings:
+        bookings_collection.update_many(                                                # mark all of this user's created bookings as cancelled (NOT refunded - per policy)
+            {"_id": {"$in": [b["_id"] for b in created_bookings]}},
+            {"$set": {"payment_status": "cancelled"}},
+        )
+
+    bookings_collection.update_many(                                                    # remove the user from any shared bookings they were linked to but didn't create
+        {"linked_user_ids": user_object_id, "creator_user_id": {"$ne": user_object_id}},
+        {"$pull": {"linked_user_ids": user_object_id}},
+    )
+
+    mongo.db.minors.delete_many({"user_id": user_object_id})                            # waivers live on the minor docs themselves so deleting the minor removes the waiver too
+    delete_result = fn_get_users_collection(mongo).delete_one({"_id": user_object_id})
+    return delete_result.deleted_count > 0
