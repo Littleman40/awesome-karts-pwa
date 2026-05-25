@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{% block title %}Admin - Awesome Karts{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <link rel="apple-touch-icon" href="/static/icons/icon-dark-2000.png">
+    <link rel="icon" type="image/png" href="/static/icons/icon-light-2000.png" media="(prefers-color-scheme: dark)">
+    <link rel="icon" type="image/png" href="/static/icons/icon-dark-2000.png" media="(prefers-color-scheme: light)">
+
+    <meta name="theme-color" content="#A855F7">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ak-bg':     '#000000',
+                        'ak-card':   '#161616',
+                        'ak-border': '#1F1F1F',
+                        'ak-purple': '#A855F7',
+                        'ak-muted':  '#A0A0A0',
+                        'ak-hint':   '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-ak-bg text-white font-sans min-h-screen">
+
+<div class="flex min-h-screen">
+
+    <!-- sidebar -->
+    <aside class="hidden md:flex flex-col w-60 shrink-0 bg-ak-card border-r border-ak-border">
+        <div class="px-5 py-5 border-b border-ak-border">
+            <p class="text-white font-bold text-base leading-tight">Admin Panel</p>
+        </div>
+
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            {% set is_dashboard = request.path == '/admin' %}
+            {% set is_bookings  = request.path.startswith('/admin/bookings') %}
+            {% set is_customers = request.path.startswith('/admin/customers') %}
+            {% set is_settings  = request.path.startswith('/admin/settings') %}
+
+            <a href="/admin"
+               class="block px-3 py-2 rounded-lg text-sm transition-colors {% if is_dashboard %}bg-ak-purple/15 text-white border border-ak-purple/40{% else %}text-ak-muted hover:text-white hover:bg-ak-border{% endif %}">
+                Dashboard
+            </a>
+            <a href="/admin/bookings"
+               class="block px-3 py-2 rounded-lg text-sm transition-colors {% if is_bookings %}bg-ak-purple/15 text-white border border-ak-purple/40{% else %}text-ak-muted hover:text-white hover:bg-ak-border{% endif %}">
+                Bookings
+            </a>
+            <a href="/admin/customers"
+               class="block px-3 py-2 rounded-lg text-sm transition-colors {% if is_customers %}bg-ak-purple/15 text-white border border-ak-purple/40{% else %}text-ak-muted hover:text-white hover:bg-ak-border{% endif %}">
+                Customers
+            </a>
+            <a href="/admin/settings"
+               class="block px-3 py-2 rounded-lg text-sm transition-colors {% if is_settings %}bg-ak-purple/15 text-white border border-ak-purple/40{% else %}text-ak-muted hover:text-white hover:bg-ak-border{% endif %}">
+                Settings
+            </a>
+        </nav>
+
+        <div class="px-5 py-4 border-t border-ak-border">
+            <button type="button" data-admin-logout
+                    class="w-full inline-flex items-center justify-center bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-white text-xs font-medium px-3 py-1.5 rounded-full transition-colors mb-3">
+                Log Out
+            </button>
+            {% if current_admin %}
+                <p class="text-ak-hint text-[10px] uppercase tracking-wide mb-1">Signed in as</p>
+                <p class="text-white text-xs truncate">{{ current_admin.email }}</p>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- main column -->
+    <div class="flex-1 min-w-0 flex flex-col">
+        <main class="flex-1 min-w-0 px-6 py-6">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<script src="/static/js/admin.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

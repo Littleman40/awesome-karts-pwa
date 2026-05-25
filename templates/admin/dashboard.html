@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+    <div class="mb-8">
+        <div class="w-8 h-0.5 bg-ak-purple mb-3"></div>
+        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+            <h2 class="text-white font-bold text-lg mb-2">Bookings</h2>
+            <p class="text-ak-muted text-sm mb-6 flex-1">Manage all bookings. Select a date and view all bookings made for that specific date. This includes the ability to cancel/ refund bookings.</p>
+            <a href="/admin/bookings"
+               class="inline-flex items-center justify-center gap-1.5 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors w-full">
+                Go to Bookings
+                <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">
+            </a>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+            <h2 class="text-white font-bold text-lg mb-2">Customers</h2>
+            <p class="text-ak-muted text-sm mb-6 flex-1">Find customer's accounts through first name, last name and email. See all bookings they have made, and manage them.</p>
+            <a href="/admin/customers"
+               class="inline-flex items-center justify-center gap-1.5 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors w-full">
+                Go to Customers
+                <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">
+            </a>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-6 flex flex-col">
+            <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+            <h2 class="text-white font-bold text-lg mb-2">Settings</h2>
+            <p class="text-ak-muted text-sm mb-6 flex-1">Manage max capacity per hour, and book out dates and/ or specific hours.</p>
+            <a href="/admin/settings"
+               class="inline-flex items-center justify-center gap-1.5 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors w-full">
+                Go to Settings
+                <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

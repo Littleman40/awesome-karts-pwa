@@ -1,0 +1,160 @@
+{% extends "admin/base.html" %}
+{% block title %}Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+            <div class="w-8 h-0.5 bg-ak-purple mb-3"></div>
+            <h1 class="text-2xl font-bold text-white">Bookings</h1>
+            <p class="text-ak-muted text-sm mt-1">Pick a date on the calendar to see the day's bookings hour-by-hour.</p>
+        </div>
+        <button id="btn-open-manual-booking" type="button"
+                class="inline-flex items-center gap-1.5 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors shrink-0">
+            <img src="/static/img/plus.svg" alt="" class="w-3.5 h-3.5 invert">
+            Manually Add Booking
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-4 items-start">
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3 gap-2">
+                <div class="flex items-center gap-1.5">
+                    <button id="bk-cal-prev" type="button" aria-label="Previous month"
+                            class="w-7 h-7 rounded-full bg-ak-border hover:bg-ak-purple text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <img src="/static/img/left.svg" alt="" class="w-4 h-4 invert">
+                    </button>
+                    <p id="bk-cal-title" class="text-white text-sm font-semibold min-w-[100px] text-center"></p>
+                    <button id="bk-cal-next" type="button" aria-label="Next month"
+                            class="w-7 h-7 rounded-full bg-ak-border hover:bg-ak-purple text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">
+                    </button>
+                </div>
+                <p id="bk-date-display" class="text-ak-muted text-xs font-medium text-right truncate"></p>
+            </div>
+            <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+                <div class="text-ak-muted text-xs font-medium py-1">Sun</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Mon</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Tue</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Wed</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Thu</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Fri</div>
+                <div class="text-ak-muted text-xs font-medium py-1">Sat</div>
+            </div>
+            <div id="bk-cal-grid" class="grid grid-cols-7 gap-0.5"></div>
+        </div>
+
+        <div class="bg-ak-card border border-ak-border rounded-xl p-5">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-white font-bold text-base">Hour-by-Hour</p>
+                <p id="bk-hour-summary" class="text-ak-muted text-xs"></p>
+            </div>
+            <div id="bk-day-blocked-banner" class="hidden bg-red-500/10 border border-red-500/40 rounded-lg px-4 py-3 mb-3">
+                <p class="text-red-400 text-sm font-semibold">Day blocked</p>
+                <p id="bk-day-blocked-reason" class="text-ak-muted text-xs mt-0.5"></p>
+            </div>
+            <div id="bk-hours-loading" class="text-ak-muted text-sm py-4">Pick a date to see bookings.</div>
+            <div id="bk-hours-list" class="space-y-3 hidden"></div>
+            <div id="bk-hours-empty" class="hidden text-ak-muted text-sm py-4">No bookings on this day.</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- detail modal -->
+<div id="booking-detail-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
+    <div class="bg-ak-card border border-ak-border rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 class="text-white font-bold text-lg">Booking Details</h3>
+                <p id="booking-detail-ref" class="text-ak-muted text-xs mt-0.5"></p>
+            </div>
+            <button type="button" data-close-detail aria-label="Close"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-ak-muted hover:text-white hover:bg-ak-border transition-colors">
+                <img src="/static/img/cross.svg" alt="" class="w-4 h-4 invert">
+            </button>
+        </div>
+        <div id="booking-detail-body" class="text-sm text-white"></div>
+        <div class="flex gap-2 mt-5">
+            <button type="button" data-close-detail
+                    class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2 rounded-full transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- manual booking modal -->
+<div id="manual-booking-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
+    <div class="bg-ak-card border border-ak-border rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-white font-bold text-lg">Manually Add Booking</h3>
+            <button type="button" data-close-manual aria-label="Close"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-ak-muted hover:text-white hover:bg-ak-border transition-colors">
+                <img src="/static/img/cross.svg" alt="" class="w-4 h-4 invert">
+            </button>
+        </div>
+        <p class="text-ak-muted text-xs mb-4">For phone-in customers. The booking is recorded as <span class="text-white font-semibold">paid</span>. The customer must already have a registered account.</p>
+        <form id="manual-booking-form" class="space-y-4" novalidate>
+            <div>
+                <label for="m-customer-email" class="block text-white text-xs font-medium mb-1">Customer Email</label>
+                <input id="m-customer-email" name="customer_email" type="email" required
+                       class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="m-date" class="block text-white text-xs font-medium mb-1">Date</label>
+                    <input id="m-date" name="date" type="date" required
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors ak-date-input">
+                </div>
+                <div>
+                    <label for="m-time" class="block text-white text-xs font-medium mb-1">Hour (0-23)</label>
+                    <input id="m-time" name="time_slot" type="number" min="0" max="23" required
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="m-adults" class="block text-white text-xs font-medium mb-1">Adults</label>
+                    <input id="m-adults" name="adult_count" type="number" min="0" value="1" required
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <div>
+                    <label for="m-juniors" class="block text-white text-xs font-medium mb-1">Juniors</label>
+                    <input id="m-juniors" name="junior_count" type="number" min="0" value="0" required
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="m-package" class="block text-white text-xs font-medium mb-1">Package</label>
+                    <select id="m-package" name="package_id" required
+                            class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                        <option value="1_ride">1 Ride</option>
+                        <option value="2_rides">2 Rides</option>
+                        <option value="3_rides">3 Rides</option>
+                        <option value="4_plus">4+ Rides</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="m-extra" class="block text-white text-xs font-medium mb-1">Extra Rides (4+)</label>
+                    <input id="m-extra" name="extra_rides" type="number" min="0" value="0"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+            </div>
+            <p id="manual-booking-error" class="hidden text-sm text-red-400"></p>
+            <div class="flex gap-2">
+                <button type="submit"
+                        class="bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-5 py-2 rounded-full transition-colors">
+                    Create Booking
+                </button>
+                <button type="button" data-close-manual
+                        class="bg-ak-card border border-ak-border hover:border-ak-purple text-white text-sm font-medium px-4 py-2 rounded-full transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

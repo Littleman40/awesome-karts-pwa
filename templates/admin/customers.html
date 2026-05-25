@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+{% block title %}Customers - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+    <div class="mb-6">
+        <div class="w-8 h-0.5 bg-ak-purple mb-3"></div>
+        <h1 class="text-2xl font-bold text-white">Customers</h1>
+        <p class="text-ak-muted text-sm mt-1">Find customer's account information and booking details.</p>
+    </div>
+
+    <div class="bg-ak-card border border-ak-border rounded-full p-1 mb-2">
+        <div class="flex flex-row items-center gap-2 min-w-0">
+            <input id="cust-search" type="text" placeholder="e.g. first, last name   -   f*, las*   -   test@example.com"
+                   class="flex-1 min-w-0 bg-ak-border text-white placeholder-ak-hint text-sm rounded-full px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+            <button id="btn-cust-search" type="button"
+                    class="shrink-0 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors">
+                Search
+            </button>
+        </div>
+    </div>
+
+    <div id="cust-empty-state" class="bg-ak-card border border-ak-border rounded-xl p-8 text-center">
+        <p class="text-ak-muted text-sm">Enter a search above to find customers.</p>
+    </div>
+
+    <div id="cust-loading" class="hidden text-ak-muted text-sm py-4">Searching…</div>
+
+    <div id="cust-table-wrapper" class="hidden bg-ak-card border border-ak-border rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-ak-border/40 text-ak-muted text-xs uppercase tracking-wide">
+                    <tr>
+                        <th class="px-3 py-2 text-left">Name</th>
+                        <th class="px-3 py-2 text-left">Email</th>
+                        <th class="px-3 py-2 text-left">Phone</th>
+                        <th class="px-3 py-2 text-left">Date of Birth</th>
+                    </tr>
+                </thead>
+                <tbody id="cust-tbody" class="divide-y divide-ak-border text-white"></tbody>
+            </table>
+        </div>
+        <div id="cust-empty" class="hidden p-6 text-ak-muted text-sm text-center">No customers match.</div>
+    </div>
+</div>
+
+<!-- profile modal -->
+<div id="cust-profile-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
+    <div class="bg-ak-card border border-ak-border rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h3 id="cust-profile-name" class="text-white font-bold text-lg">Customer Profile</h3>
+                <p id="cust-profile-email" class="text-ak-muted text-xs mt-0.5"></p>
+            </div>
+            <button type="button" data-close-profile aria-label="Close"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-ak-muted hover:text-white hover:bg-ak-border transition-colors">
+                <img src="/static/img/cross.svg" alt="" class="w-4 h-4 invert">
+            </button>
+        </div>
+        <div id="cust-profile-body"></div>
+    </div>
+</div>
+{% endblock %}

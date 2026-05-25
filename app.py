@@ -5,9 +5,12 @@ from config import Config
 from extensions import mongo
 from models.user import fn_ensure_db_indexes, fn_find_user_by_id
 from models.booking import fn_ensure_booking_indexes, fn_find_booking_by_share_token   # booking model / used for the share-link page and to create indexes on startup
+from models.admin import fn_find_admin_by_id                                           # used by the context processor below so admin templates can show {{ current_admin.email }}
 from routes.auth import auth_bp
 from routes.bookings import bookings_bp                                                # /api/bookings/* / slot lookups, create, share-add
 from routes.users import users_bp                                                      # /api/users/me/* / dashboard data (bookings, minors, waivers)
+from routes.admin_auth import admin_auth_bp                                            # /api/admin/auth/* / admin login + logout (separate from user auth)
+from routes.admin import admin_bp                                                      # /api/admin/* / everything the admin frontend talks to
 
 
 def fn_create_app():
@@ -26,6 +29,8 @@ def fn_create_app():
     app.register_blueprint(auth_bp)                                 # /api/auth/* / login, register, logout
     app.register_blueprint(bookings_bp)                             # /api/bookings/* / slot lookups, create booking, add-to-account via share token
     app.register_blueprint(users_bp)                                # /api/users/me/* / dashboard data (bookings, minors, waivers)
+    app.register_blueprint(admin_auth_bp)                           # /api/admin/auth/* / admin login + logout
+    app.register_blueprint(admin_bp)                                # /api/admin/* / dashboard, bookings, customers, slots, waivers, settings
 
     @app.context_processor
     def fn_inject_current_user():
@@ -34,7 +39,12 @@ def fn_create_app():
             current_user = fn_find_user_by_id(mongo, session["user_id"])
             if current_user is None:                                # if user doesnt exist then log them out
                 session.clear()
-        return {"current_user": current_user}                       # now pages can now do {{ current_user.first_name }}
+        current_admin = None                                        # mirror the same pattern for admin sessions so admin templates can use {{ current_admin.email }}
+        if "admin_id" in session:
+            current_admin = fn_find_admin_by_id(mongo, session["admin_id"])
+            if current_admin is None:                               # session points to a deleted admin - drop the cookie
+                session.pop("admin_id", None)
+        return {"current_user": current_user, "current_admin": current_admin}
 
 
     @app.route("/")
@@ -92,6 +102,36 @@ def fn_create_app():
             share_token=share_token,
             is_linked=is_linked,
         )
+
+    @app.route("/admin/login")
+    def fn_admin_login_page():                                                                  # admin login page - if already logged in as admin, send them straight to /admin
+        if "admin_id" in session:
+            return redirect("/admin")
+        return render_template("admin/login.html")
+
+    @app.route("/admin")
+    def fn_admin_dashboard_page():                                                              # all the /admin/* page routes below redirect to /admin/login when not authed
+        if "admin_id" not in session:
+            return redirect("/admin/login")
+        return render_template("admin/dashboard.html")
+
+    @app.route("/admin/bookings")
+    def fn_admin_bookings_page():
+        if "admin_id" not in session:
+            return redirect("/admin/login")
+        return render_template("admin/bookings.html")
+
+    @app.route("/admin/customers")
+    def fn_admin_customers_page():
+        if "admin_id" not in session:
+            return redirect("/admin/login")
+        return render_template("admin/customers.html")
+
+    @app.route("/admin/settings")
+    def fn_admin_settings_page():
+        if "admin_id" not in session:
+            return redirect("/admin/login")
+        return render_template("admin/settings.html")
 
     @app.route("/refund-policy")
     def fn_refund_policy():

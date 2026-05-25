@@ -8,9 +8,9 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
 - [x] Log In/ Register System
 - [x] User Dashboard 
 - [x] Booking System
+- [x] Admin Management
 
 ## Planned Updates
-- [ ] Admin Management
 - [ ] Payment System
 - [ ] Notification System
 
@@ -25,7 +25,7 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
 - **MongoDB Atlas**: https://www.mongodb.com/atlas
 - **bcrypt**: https://flask-bcrypt.readthedocs.io/en/1.0.1/
 
-## run it locally
+## Run it locally
 
 1. **clone/download the repo**
 2. **install dependencies**
@@ -34,6 +34,7 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
    ```
 3. **set up MongoDB Atlas**
 4. **create a `.env` file**
+5. **run `python -m scripts.create_admin`**
 5. **run the server**
    ```bash
    python app.py

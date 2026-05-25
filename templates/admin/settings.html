@@ -1,0 +1,94 @@
+{% extends "admin/base.html" %}
+{% block title %}Settings - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl">
+    <div class="mb-6">
+        <div class="w-8 h-0.5 bg-ak-purple mb-3"></div>
+        <h1 class="text-2xl font-bold text-white">Settings</h1>
+        <p class="text-ak-muted text-sm mt-1">Manage hourly capacity and block dates.</p>
+    </div>
+
+    <div id="settings-loading" class="text-ak-muted text-sm py-4">Loading…</div>
+
+    <form id="settings-form" class="hidden space-y-8" novalidate>
+
+        <section class="bg-ak-card border border-ak-border rounded-xl p-5">
+            <h2 class="text-white font-bold text-base mb-1">Capacity</h2>
+            <p class="text-ak-muted text-xs mb-4">Hard cap of drivers per hourly slot.</p>
+            <div class="flex items-end gap-3">
+                <div class="w-72">
+                    <label for="settings-capacity" class="block text-white text-xs font-medium mb-1">Max Capacity Per Slot</label>
+                    <input id="settings-capacity" type="number" min="1" max="500"
+                           class="w-full bg-ak-border text-white text-sm rounded-lg px-3 py-2 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                </div>
+                <button type="submit"
+                        class="shrink-0 bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-5 py-2 rounded-full transition-colors">
+                    Save
+                </button>
+                <div class="pb-2">
+                    <p id="settings-error" class="hidden text-sm text-red-400"></p>
+                    <p id="settings-success" class="hidden text-sm text-green-400">Settings saved.</p>
+                </div>
+            </div>
+        </section>
+    </form>
+
+    <div class="mt-10">
+        <h2 class="text-white font-bold text-base mb-1">Block Dates &amp; Hours</h2>
+        <p class="text-ak-muted text-xs mb-4">Pick a date on the calendar, then block the whole day or specific hours. Existing bookings on that date are shown for reference.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-4 items-start">
+
+            <div class="space-y-3">
+                <div class="bg-ak-card border border-ak-border rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3 gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <button id="set-cal-prev" type="button" aria-label="Previous month"
+                                    class="w-7 h-7 rounded-full bg-ak-border hover:bg-ak-purple text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                                <img src="/static/img/left.svg" alt="" class="w-4 h-4 invert">
+                            </button>
+                            <p id="set-cal-title" class="text-white text-sm font-semibold min-w-[100px] text-center"></p>
+                            <button id="set-cal-next" type="button" aria-label="Next month"
+                                    class="w-7 h-7 rounded-full bg-ak-border hover:bg-ak-purple text-white flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                                <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">
+                            </button>
+                        </div>
+                        <p id="set-date-display" class="text-ak-muted text-xs font-medium text-right truncate"></p>
+                    </div>
+                    <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+                        <div class="text-ak-muted text-xs font-medium py-1">Sun</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Mon</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Tue</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Wed</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Thu</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Fri</div>
+                        <div class="text-ak-muted text-xs font-medium py-1">Sat</div>
+                    </div>
+                    <div id="set-cal-grid" class="grid grid-cols-7 gap-0.5"></div>
+                </div>
+
+                <button id="btn-set-block-day" type="button" disabled
+                        class="w-full bg-ak-card border border-ak-border hover:border-ak-purple disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2.5 rounded-full transition-colors">
+                    Block this day
+                </button>
+            </div>
+
+            <div class="bg-ak-card border border-ak-border rounded-xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-white font-bold text-base">Hour-by-Hour</p>
+                    <p id="set-hour-summary" class="text-ak-muted text-xs"></p>
+                </div>
+                <div id="set-day-blocked-banner" class="hidden bg-red-500/10 border border-red-500/40 rounded-lg px-4 py-3 mb-3">
+                    <p class="text-red-400 text-sm font-semibold">Day blocked</p>
+                    <p id="set-day-blocked-reason" class="text-ak-muted text-xs mt-0.5"></p>
+                </div>
+                <div id="set-hours-loading" class="text-ak-muted text-sm py-4">Pick a date to manage its hours.</div>
+                <div id="set-hours-list" class="space-y-3 hidden"></div>
+                <div id="set-hours-empty" class="hidden text-ak-muted text-sm py-4">No hours available on this date.</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
