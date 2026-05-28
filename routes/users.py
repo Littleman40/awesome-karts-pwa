@@ -22,13 +22,22 @@ def fn_error_response(error_message, http_status=400):                          
     return jsonify({"success": False, "error": error_message}), http_status
 
 
-@users_bp.route("/me/bookings", methods=["GET"])                                    # returns the current user's upcoming bookings (creator OR linked-via-share)
+@users_bp.route("/me/bookings", methods=["GET"])                                    # returns the current user's bookings (creator OR linked-via-share), split into upcoming vs past/cancelled
 @fn_login_required
 def fn_get_my_bookings():
     user_id = session["user_id"]
-    bookings = booking_model.fn_get_user_upcoming_bookings(mongo, user_id)
-    formatted = [booking_model.fn_format_booking_for_api(b, user_id) for b in bookings]   # convert each mongo doc to json-friendly dict (also adds is_creator flag)
-    return fn_ok_response(formatted)
+    all_bookings = booking_model.fn_get_user_bookings(mongo, user_id)
+    upcoming_bookings = []
+    past_bookings = []
+    for booking_doc in all_bookings:
+        formatted_booking = booking_model.fn_format_booking_for_api(booking_doc, user_id)   # convert each mongo doc to json-friendly dict (also adds is_creator / is_past flags)
+        is_inactive = formatted_booking["payment_status"] in ("cancelled", "refunded")
+        if is_inactive or formatted_booking["is_past"]:                              # cancelled/refunded (any date) and finished bookings belong in the past section
+            past_bookings.append(formatted_booking)
+        else:
+            upcoming_bookings.append(formatted_booking)
+    past_bookings.reverse()                                                         # all_bookings is sorted soonest-first; show the past list most-recent-first instead
+    return fn_ok_response({"upcoming": upcoming_bookings, "past": past_bookings})
 
 
 @users_bp.route("/me/minors", methods=["GET"])                                           # returns the current user's registered minors for the dashboard's "My Minors" section

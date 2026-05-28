@@ -63,7 +63,7 @@ def fn_create_booking():                                                        
     except (ValueError, TypeError):
         return fn_error_response("Invalid date.")
 
-    if booking_date < date_type.today():                                        # never trust the front end — re-check past-date here
+    if booking_date < date_type.today():                                        # never trust the front end - re-check past-date here
         return fn_error_response("Cannot book in the past.")
 
     if time_slot_raw is None:
@@ -117,5 +117,7 @@ def fn_add_booking_to_account(share_token):
     booking = booking_model.fn_find_booking_by_share_token(mongo, share_token)
     if booking is None:
         return fn_error_response("Booking not found.", 404)
+    if booking.get("payment_status") in ("cancelled", "refunded"):                  # once a booking is cancelled/refunded the share link is dead - nobody else can join it
+        return fn_error_response("This booking has been cancelled and can no longer be added to an account.")
     booking_model.fn_add_linked_user(mongo, share_token, user_id)
     return fn_ok_response({"message": "Booking added to your account."})

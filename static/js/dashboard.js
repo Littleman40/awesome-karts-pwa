@@ -52,94 +52,181 @@
         return "$" + (cents / 100).toFixed(2);
     }
 
-    function fnStatusBadgeHTML(paymentStatus) {                                                                 // returns the colored pill HTML for the booking's payment status
-        if (paymentStatus === "paid") {
-            return '<span class="text-xs font-semibold bg-green-500 bg-opacity-20 text-green-400 px-2 py-0.5 rounded-full">Upcoming</span>';
-        }
+    function fnStatusBadgeHTML(booking) {                                                                       // returns the colored pill HTML for the booking's payment status
+        var paymentStatus = booking.payment_status;
         if (paymentStatus === "cancelled") {
             return '<span class="text-xs font-semibold bg-red-500 bg-opacity-20 text-red-400 px-2 py-0.5 rounded-full">Cancelled</span>';
         }
         if (paymentStatus === "refunded") {
-            return '<span class="text-xs font-semibold bg-ak-border text-ak-muted px-2 py-0.5 rounded-full">Refunded</span>';
+            return '<span class="text-xs font-semibold bg-blue-500 bg-opacity-20 text-blue-400 px-2 py-0.5 rounded-full">Refunded</span>';
+        }
+        if (paymentStatus === "paid") {
+            if (booking.is_past) {                                                                              // a paid booking whose date has passed is a finished session, not an upcoming one
+                return '<span class="text-xs font-semibold bg-ak-border text-ak-muted px-2 py-0.5 rounded-full">Completed</span>';
+            }
+            return '<span class="text-xs font-semibold bg-green-500 bg-opacity-20 text-green-400 px-2 py-0.5 rounded-full">Upcoming</span>';
         }
         return '<span class="text-xs font-semibold bg-yellow-500 bg-opacity-20 text-yellow-400 px-2 py-0.5 rounded-full">Pending</span>';   // default = pending (v3 will use this once Stripe is wired up)
     }
 
+    function fnBuildBookingCard(booking, allowShareLink) {                                                      // builds one booking card DOM element; allowShareLink controls whether the creator's "Copy share link" button is shown
+        var dateLabel = fnFormatDateDisplay(booking.date, booking.time_label);
 
-    function fnRenderBookings(bookings) {                                                                       // paints the "Upcoming Bookings" section from the API response
-        var loadingEl = document.getElementById("bookings-loading");
-        var emptyEl   = document.getElementById("bookings-empty");
-        var listEl    = document.getElementById("bookings-list");
-
-        if (loadingEl) { loadingEl.classList.add("hidden"); }                                                   // always hide the spinner once we're rendering
-
-        if (!bookings || bookings.length === 0) {                                                               // no bookings, show the "Book Now" empty state
-            if (emptyEl) { emptyEl.classList.remove("hidden"); }
-            return;
+        var driversStr = "";
+        if (booking.adult_count > 0)  { driversStr += booking.adult_count + " adult" + (booking.adult_count > 1 ? "s" : ""); }
+        if (booking.junior_count > 0) {
+            if (driversStr) { driversStr += ", "; }
+            driversStr += booking.junior_count + " junior" + (booking.junior_count > 1 ? "s" : "");
         }
 
-        if (!listEl) { return; }
-        listEl.innerHTML = "";                                                                                  // clear any previously-rendered cards before re-rendering
-        listEl.classList.remove("hidden");
+        var ownerBadge = booking.is_creator
+            ? '<span class="text-xs font-semibold bg-ak-purple bg-opacity-20 text-ak-purple px-2 py-0.5 rounded-full">Created by you</span>'
+            : '<span class="text-xs font-semibold bg-ak-border text-ak-muted px-2 py-0.5 rounded-full">Shared with you</span>';
 
-        for (var i = 0; i < bookings.length; i++) {
-            var b = bookings[i];
-            var dateLabel = fnFormatDateDisplay(b.date, b.time_label);
+        var shareBtn = "";
+        if (allowShareLink && booking.is_creator && booking.share_token) {                                      // sharing is only offered for active bookings the user created - cancelled/refunded/past bookings can't be joined
+            shareBtn = '<button type="button" class="copy-share-btn text-ak-muted hover:text-white text-xs underline transition-colors" data-token="' + booking.share_token + '">Copy share link</button>';
+        }
 
-            var driversStr = "";
-            if (b.adult_count > 0)  { driversStr += b.adult_count + " adult" + (b.adult_count > 1 ? "s" : ""); }
-            if (b.junior_count > 0) {
-                if (driversStr) { driversStr += ", "; }
-                driversStr += b.junior_count + " junior" + (b.junior_count > 1 ? "s" : "");
-            }
-
-            var ownerBadge = b.is_creator
-                ? '<span class="text-xs font-semibold bg-ak-purple bg-opacity-20 text-ak-purple px-2 py-0.5 rounded-full">Created by you</span>'
-                : '<span class="text-xs font-semibold bg-ak-border text-ak-muted px-2 py-0.5 rounded-full">Shared with you</span>';
-
-            var shareBtn = "";
-            if (b.is_creator && b.share_token) {
-                shareBtn = '<button type="button" class="copy-share-btn text-ak-muted hover:text-white text-xs underline transition-colors" data-token="' + b.share_token + '">Copy share link</button>';
-            }
-
-            var card = document.createElement("div");
-            card.className = "bg-ak-card border border-ak-border rounded-xl p-5";
-            card.innerHTML =
-                '<div class="flex justify-between items-start gap-4">' +
-                    '<div>' +
-                        '<p class="text-white font-bold">' + dateLabel + '</p>' +
-                        '<p class="text-ak-muted text-sm mt-0.5">' + driversStr + '</p>' +
-                        '<p class="text-ak-muted text-sm">' + b.package_label + ' &nbsp;·&nbsp; ' + fnFormatCents(b.total_amount) + '</p>' +
-                    '</div>' +
-                    '<div class="text-right shrink-0">' +
-                        fnStatusBadgeHTML(b.payment_status) +
-                        '<p class="text-ak-hint text-xs mt-1 font-mono">Ref: ' + b.ref + '</p>' +
-                    '</div>' +
+        var card = document.createElement("div");
+        card.className = "bg-ak-card border border-ak-border rounded-xl p-5";
+        card.innerHTML =
+            '<div class="flex justify-between items-start gap-4">' +
+                '<div>' +
+                    '<p class="text-white font-bold">' + dateLabel + '</p>' +
+                    '<p class="text-ak-muted text-sm mt-0.5">' + driversStr + '</p>' +
+                    '<p class="text-ak-muted text-sm">' + booking.package_label + ' &nbsp;·&nbsp; ' + fnFormatCents(booking.total_amount) + '</p>' +
                 '</div>' +
-                '<div class="mt-3 flex items-center gap-3">' +
-                    ownerBadge + shareBtn +
-                '</div>';
+                '<div class="text-right shrink-0">' +
+                    fnStatusBadgeHTML(booking) +
+                    '<p class="text-ak-hint text-xs mt-1 font-mono">Ref: ' + booking.ref + '</p>' +
+                '</div>' +
+            '</div>' +
+            '<div class="mt-3 flex items-center gap-3">' +
+                ownerBadge + shareBtn +
+            '</div>';
+        return card;
+    }
 
-            listEl.appendChild(card);
-        }
-
+    function fnWireCopyShareButtons(listEl) {                                                                   // attaches click-to-copy behaviour to every "Copy share link" button inside listEl
         var copyBtns = listEl.querySelectorAll(".copy-share-btn");
-        for (var j = 0; j < copyBtns.length; j++) {
-            (function (btn) {
-                btn.addEventListener("click", function () {
-                    var token = btn.getAttribute("data-token");
+        for (var buttonIndex = 0; buttonIndex < copyBtns.length; buttonIndex++) {
+            (function (copyButton) {
+                copyButton.addEventListener("click", function () {
+                    var token = copyButton.getAttribute("data-token");
                     if (!token) { return; }
                     var url = window.location.origin + "/bookings/share/" + token;                              // full URL so it's pasteable directly
                     if (navigator.clipboard && navigator.clipboard.writeText) {
                         navigator.clipboard.writeText(url).then(function () {
-                            btn.textContent = "Copied!";
-                            setTimeout(function () { btn.textContent = "Copy share link"; }, 2000);             // revert label after 2 seconds
-                        }).catch(function () { fnFallbackCopy(url, btn); });
+                            copyButton.textContent = "Copied!";
+                            setTimeout(function () { copyButton.textContent = "Copy share link"; }, 2000);      // revert label after 2 seconds
+                        }).catch(function () { fnFallbackCopy(url, copyButton); });
                     } else {
-                        fnFallbackCopy(url, btn);
+                        fnFallbackCopy(url, copyButton);
                     }
                 });
-            }(copyBtns[j]));
+            }(copyBtns[buttonIndex]));
+        }
+    }
+
+    function fnRenderBookings(upcomingBookings) {                                                               // paints the "Your Upcoming Bookings" section
+        var loadingEl   = document.getElementById("bookings-loading");
+        var emptyEl     = document.getElementById("bookings-empty");
+        var wrapperEl   = document.getElementById("bookings-list-wrapper");
+        var innerEl     = document.getElementById("bookings-list-inner");
+        var listEl      = document.getElementById("bookings-list");
+        var gradientEl  = document.getElementById("bookings-list-gradient");
+        var showMoreRow = document.getElementById("bookings-show-more-row");
+        var showMoreBtn = document.getElementById("btn-show-more-upcoming");
+
+        if (loadingEl) { loadingEl.classList.add("hidden"); }                                                   // always hide the spinner once we're rendering
+
+        if (!upcomingBookings || upcomingBookings.length === 0) {                                               // no upcoming bookings, show the "Book Now" empty state
+            if (emptyEl)   { emptyEl.classList.remove("hidden"); }
+            if (wrapperEl) { wrapperEl.classList.add("hidden"); }
+            return;
+        }
+
+        if (!listEl) { return; }
+        if (emptyEl)   { emptyEl.classList.add("hidden"); }
+        if (wrapperEl) { wrapperEl.classList.remove("hidden"); }
+        listEl.innerHTML = "";                                                                                  // clear any previously-rendered cards before re-rendering
+
+        for (var bookingIndex = 0; bookingIndex < upcomingBookings.length; bookingIndex++) {
+            listEl.appendChild(fnBuildBookingCard(upcomingBookings[bookingIndex], true));                       // true = upcoming bookings can be shared
+        }
+
+        fnWireCopyShareButtons(listEl);
+
+        if (upcomingBookings.length > 1 && innerEl && showMoreRow && showMoreBtn) {                             // truncate to 1.5 cards when there are multiple upcoming bookings
+            innerEl.style.maxHeight = PAST_PEEK_HEIGHT + "px";
+            if (gradientEl) { gradientEl.classList.remove("hidden"); }
+            showMoreRow.classList.remove("hidden");
+
+            var isExpanded = false;
+            showMoreBtn.onclick = function () {
+                isExpanded = !isExpanded;
+                if (isExpanded) {
+                    innerEl.style.maxHeight = innerEl.scrollHeight + "px";
+                    if (gradientEl) { gradientEl.classList.add("hidden"); }
+                    showMoreBtn.textContent = "Show less";
+                } else {
+                    innerEl.style.maxHeight = PAST_PEEK_HEIGHT + "px";
+                    if (gradientEl) { gradientEl.classList.remove("hidden"); }
+                    showMoreBtn.textContent = "Show more";
+                }
+            };
+        } else {
+            if (innerEl)    { innerEl.style.maxHeight = ""; }                                                   // single booking — no clipping needed
+            if (gradientEl) { gradientEl.classList.add("hidden"); }
+            if (showMoreRow) { showMoreRow.classList.add("hidden"); }
+        }
+    }
+
+    var PAST_PEEK_HEIGHT = 238;                                                                                 // px — shows ~1.5 cards (card ≈140px + gap 12px + half card ≈70px + pt-4 16px)
+
+    function fnRenderPastBookings(pastBookings) {                                                               // paints the "Past & Cancelled Bookings" section, hidden entirely when there's nothing to show
+        var sectionEl   = document.getElementById("past-bookings-section");
+        var listEl      = document.getElementById("past-bookings-list");
+        var innerEl     = document.getElementById("past-bookings-inner");
+        var gradientEl  = document.getElementById("past-bookings-gradient");
+        var showMoreRow = document.getElementById("past-bookings-show-more-row");
+        var showMoreBtn = document.getElementById("btn-show-more-past");
+        if (!sectionEl || !listEl) { return; }
+
+        if (!pastBookings || pastBookings.length === 0) {
+            sectionEl.classList.add("hidden");
+            return;
+        }
+
+        listEl.innerHTML = "";
+        for (var bookingIndex = 0; bookingIndex < pastBookings.length; bookingIndex++) {
+            listEl.appendChild(fnBuildBookingCard(pastBookings[bookingIndex], false));                          // false = no share link on finished/cancelled/refunded bookings
+        }
+        sectionEl.classList.remove("hidden");
+
+        if (pastBookings.length > 1 && innerEl && showMoreRow && showMoreBtn) {                                 // truncate to 1.5 cards when there are multiple past bookings
+            innerEl.style.maxHeight = PAST_PEEK_HEIGHT + "px";
+            if (gradientEl) { gradientEl.classList.remove("hidden"); }
+            showMoreRow.classList.remove("hidden");
+
+            var isExpanded = false;
+            showMoreBtn.onclick = function () {
+                isExpanded = !isExpanded;
+                if (isExpanded) {
+                    innerEl.style.maxHeight = innerEl.scrollHeight + "px";                                      // expand to full content height
+                    if (gradientEl) { gradientEl.classList.add("hidden"); }
+                    showMoreBtn.textContent = "Show less";
+                } else {
+                    innerEl.style.maxHeight = PAST_PEEK_HEIGHT + "px";
+                    if (gradientEl) { gradientEl.classList.remove("hidden"); }
+                    showMoreBtn.textContent = "Show more";
+                }
+            };
+        } else {
+            if (innerEl)    { innerEl.style.maxHeight = ""; }                                                   // single booking — no clipping needed
+            if (gradientEl) { gradientEl.classList.add("hidden"); }
+            if (showMoreRow) { showMoreRow.classList.add("hidden"); }
         }
     }
 
@@ -409,7 +496,7 @@
                 var result = await fnPostJSON(url);
                 if (result.success) {
                     fnCloseWaiverModal();
-                    fnLoadDashboard();                                                                          // reload so the row swaps from "Sign now" → "Signed ✓"
+                    fnLoadDashboard();                                                                          // reload so the row swaps from "Sign now" → "Signed"
                 } else {
                     var errMsg = "Something went wrong.";
                     if (result.error) { errMsg = result.error; }
@@ -435,7 +522,10 @@
             fnGetJSON("/api/users/me/waiver-status"),
         ]);
 
-        if (results[0].success) { fnRenderBookings(results[0].data); }
+        if (results[0].success) {
+            fnRenderBookings(results[0].data.upcoming);
+            fnRenderPastBookings(results[0].data.past);
+        }
         if (results[1].success) { fnRenderMinors(results[1].data); }
         if (results[2].success) { fnRenderWaivers(results[2].data); }
     }

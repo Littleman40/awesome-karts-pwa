@@ -86,7 +86,7 @@ def fn_sign_minor_waiver(mongo, user_id_string, minor_id_string):               
     except Exception:
         return False
     result = fn_get_minors_collection(mongo).update_one(
-        {"_id": minor_object_id, "user_id": user_object_id},                    # same ownership check as remove — protects against signing other people's minors' waivers
+        {"_id": minor_object_id, "user_id": user_object_id},                    # same ownership check as remove - protects against signing other people's minors' waivers
         {"$set": {"waiver_accepted": True, "waiver_accepted_at": datetime.utcnow()}},
     )
     return result.modified_count > 0

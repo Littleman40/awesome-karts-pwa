@@ -509,11 +509,11 @@
 
         document.getElementById("cust-profile-body").innerHTML =
             '<div class="grid grid-cols-2 gap-3 text-sm mb-5">' +
-                '<div><p class="text-ak-muted text-xs">Phone</p><p>' + fnEscapeHtml(customer.phone || "—") + '</p></div>' +
-                '<div><p class="text-ak-muted text-xs">DOB</p><p>' + fnEscapeHtml(customer.dob || "—") + '</p></div>' +
-                '<div><p class="text-ak-muted text-xs">Gender</p><p>' + fnEscapeHtml(customer.gender || "—") + '</p></div>' +
-                '<div><p class="text-ak-muted text-xs">Created</p><p>' + fnEscapeHtml((customer.created_at || "").substring(0, 10) || "—") + '</p></div>' +
-                '<div class="col-span-2"><p class="text-ak-muted text-xs">Address</p><p>' + fnEscapeHtml(customer.address || "—") + '</p></div>' +
+                '<div><p class="text-ak-muted text-xs">Phone</p><p>' + fnEscapeHtml(customer.phone || "-") + '</p></div>' +
+                '<div><p class="text-ak-muted text-xs">DOB</p><p>' + fnEscapeHtml(customer.dob || "-") + '</p></div>' +
+                '<div><p class="text-ak-muted text-xs">Gender</p><p>' + fnEscapeHtml(customer.gender || "-") + '</p></div>' +
+                '<div><p class="text-ak-muted text-xs">Created</p><p>' + fnEscapeHtml((customer.created_at || "").substring(0, 10) || "-") + '</p></div>' +
+                '<div class="col-span-2"><p class="text-ak-muted text-xs">Address</p><p>' + fnEscapeHtml(customer.address || "-") + '</p></div>' +
                 '<div class="col-span-2"><p class="text-ak-muted text-xs">Adult Waiver</p><p>' + waiverBadge + '</p></div>' +
             '</div>' +
             '<div class="mb-5"><p class="text-ak-muted text-xs mb-2">Minors</p>' + minorsHtml + '</div>' +

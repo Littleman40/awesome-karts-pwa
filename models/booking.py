@@ -35,7 +35,7 @@ def fn_get_business_settings(mongo):                                            
 
 
 def fn_ensure_booking_indexes(mongo):                                           # called once on app startup from app.py to set up db indexes
-    mongo.db.slots.create_index([("date", 1), ("hour", 1)], unique=True)        # a slot is uniquely identified by (date, hour)-— unique index prevents two slot docs for the same time
+    mongo.db.slots.create_index([("date", 1), ("hour", 1)], unique=True)        # a slot is uniquely identified by (date, hour)- unique index prevents two slot docs for the same time
     mongo.db.bookings.create_index("share_token", unique=True, sparse=True)     # share_token must be unique so each link points to one booking. sparse=True means docs without a token are ignored
 
 
@@ -230,17 +230,15 @@ def fn_find_booking_by_share_token(mongo, share_token):                         
     return mongo.db.bookings.find_one({"share_token": share_token})
 
 
-def fn_get_user_upcoming_bookings(mongo, user_id_string):                                       # returns all bookings the user is linked to (created or shared with) that are on/after today
+def fn_get_user_bookings(mongo, user_id_string):                                                # returns every booking the user is linked to (created or shared with), regardless of date or status - caller splits into upcoming vs past
     try:
         user_object_id = ObjectId(user_id_string)
     except Exception:                                                                           # error handling
         return []
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)                # midnight today UTC
     return list(
         mongo.db.bookings.find({
             "linked_user_ids": user_object_id,                                                  # match if user appears in linked_user_ids (covers both "I created this" and "someone shared this with me")
-            "date": {"$gte": today},                                                            # only future / today bookings
-        }).sort("date", 1)                                                                      # soonest first
+        }).sort("date", 1)                                                                      # soonest first - the route re-orders the past list to most-recent-first
     )
 
 
@@ -261,6 +259,8 @@ def fn_format_booking_for_api(booking, current_user_id_string):                 
     is_creator = creator_id == current_user_id_string
     booking_date = booking.get("date")
     date_str = booking_date.strftime("%Y-%m-%d") if booking_date else ""                        # iso-style date string is easiest to parse in javascript
+    today_midnight = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    is_past = bool(booking_date is not None and booking_date < today_midnight)                  # the booking date has already passed - drives the "Completed" badge and the past-bookings section
     time_slot = booking.get("time_slot", 0)
     created_at = booking.get("created_at")
     return {
@@ -279,5 +279,6 @@ def fn_format_booking_for_api(booking, current_user_id_string):                 
         "payment_status": booking.get("payment_status", "pending"),
         "share_token": booking.get("share_token", ""),
         "is_creator": is_creator,
+        "is_past": is_past,
         "created_at": created_at.isoformat() if created_at else "",
     }

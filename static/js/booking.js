@@ -18,12 +18,12 @@
         step:        1,                                                                                         // current visible step (1-5)
         adultCount:  0,                                                                                         // number of 16+ drivers
         juniorCount: 0,                                                                                         // number of 8-15 drivers
-        packageId:   "1_ride",                                                                                  // default package — also pre-selected visually
+        packageId:   "1_ride",                                                                                  // default package - also pre-selected visually
         extraRides:  1,                                                                                         // only meaningful when packageId === "4_plus"
         date:        null,                                                                                      // ISO date string YYYY-MM-DD (or null until picked)
         timeSlot:    null,                                                                                      // hour 0-23
         bookingId:   null,                                                                                      // set after successful POST /api/bookings/create
-        shareToken:  null,                                                                                      // set after successful create — used by the "copy share link" button
+        shareToken:  null,                                                                                      // set after successful create - used by the "copy share link" button
     };
 
     function fnSaveState() {
@@ -58,8 +58,7 @@
         bookingState.extraRides  = 1;
         bookingState.date        = null;
         bookingState.timeSlot    = null;
-        bookingState.bookingId   = null;
-        bookingState.shareToken  = null;
+        // bookingId and shareToken are intentionally kept so the step-5 share button still works after clearing
     }
 
     function fnFormatCents(cents) {
@@ -638,7 +637,7 @@
                 bookingState.step       = 5;
                 fnUpdateConfirmation(data.data.booking_id);
                 fnRenderStep();
-                fnClearState();                                                                                 // state no longer needed after booking — next visit should start fresh
+                fnClearState();                                                                                 // state no longer needed after booking - next visit should start fresh
             } else {
                 var errMsg = "Something went wrong. Please try again.";
                 if (data.error) { errMsg = data.error; }

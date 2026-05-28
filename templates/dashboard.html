@@ -26,7 +26,38 @@
             <a href="/bookings" class="bg-ak-purple hover:bg-purple-600 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors">Book Now</a>
         </div>
 
-        <div id="bookings-list" class="space-y-3 hidden"></div>
+        <div id="bookings-list-wrapper" class="hidden bg-ak-card border border-ak-border rounded-xl overflow-hidden">
+            <div id="bookings-list-inner" class="relative overflow-hidden px-4 pt-4">
+                <div id="bookings-list" class="space-y-3 pb-4"></div>
+                <div id="bookings-list-gradient" class="hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#161616] to-transparent pointer-events-none"></div>
+            </div>
+            <div id="bookings-show-more-row" class="hidden border-t border-ak-border">
+                <button id="btn-show-more-upcoming" type="button"
+                        class="w-full py-3 text-center text-ak-purple hover:text-purple-400 text-sm font-medium transition-colors">
+                    Show more
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="past-bookings-section" class="mb-12 hidden">
+        <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
+        <div class="mb-5">
+            <h2 class="text-xl font-bold text-white">Past &amp; Cancelled Bookings</h2>
+            <p class="text-ak-muted text-sm mt-0.5">Completed sessions and any bookings that were cancelled or refunded.</p>
+        </div>
+        <div class="bg-ak-card border border-ak-border rounded-xl overflow-hidden">
+            <div id="past-bookings-inner" class="relative overflow-hidden px-4 pt-4">
+                <div id="past-bookings-list" class="space-y-3 pb-4"></div>
+                <div id="past-bookings-gradient" class="hidden absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#161616] to-transparent pointer-events-none"></div>
+            </div>
+            <div id="past-bookings-show-more-row" class="hidden border-t border-ak-border">
+                <button id="btn-show-more-past" type="button"
+                        class="w-full py-3 text-center text-ak-purple hover:text-purple-400 text-sm font-medium transition-colors">
+                    Show more
+                </button>
+            </div>
+        </div>
     </section>
 
     <section class="mb-12">

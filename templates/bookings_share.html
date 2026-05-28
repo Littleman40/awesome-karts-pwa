@@ -69,7 +69,20 @@
         </div>
     </div>
 
-    {% if current_user and is_linked %}
+    {% set booking_inactive = booking.payment_status in ['cancelled', 'refunded'] %}
+
+    {% if booking_inactive %}
+        <div class="bg-red-500/10 border border-red-500/40 rounded-xl px-5 py-4">
+            <p class="text-red-400 text-sm font-semibold">
+                {% if booking.payment_status == 'refunded' %}
+                    This booking has been refunded.
+                {% else %}
+                    This booking has been cancelled.
+                {% endif %}
+            </p>
+            <p class="text-ak-muted text-sm mt-1">It is no longer active and can't be added to an account.</p>
+        </div>
+    {% elif current_user and is_linked %}
         <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-4">
             <p class="text-green-400 text-sm">This booking is already on your account.</p>
         </div>
