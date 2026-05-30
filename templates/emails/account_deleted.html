@@ -1,0 +1,10 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}Your account has been deleted - Awesome Karts{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 16px 0; font-size:22px; font-weight:700; color:#111827;">Your account has been deleted</h1>
+<p style="margin:0 0 16px 0;">Hi {{ first_name }}, your Awesome Karts account and personal data have been permanently deleted. This action cannot be undone.</p>
+<p style="margin:0 0 16px 0;">If you'd like to race with us again, you're welcome to register a new account any time:</p>
+<p style="margin:0 0 16px 0;"><a href="{{ register_url }}" style="color:#A855F7; text-decoration:none;">{{ register_url }}</a></p>
+<p style="margin:0;">If you have any questions, just get in touch using the details below.</p>
+{% endblock %}

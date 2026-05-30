@@ -21,11 +21,6 @@
                 <div id="stepper-circle-3" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all border-ak-border text-ak-muted">3</div>
                 <p class="text-xs mt-1.5 font-medium text-ak-muted text-center leading-tight whitespace-nowrap">Payment</p>
             </div>
-            <div id="stepper-line-3" class="h-0.5 w-12 mb-5 bg-ak-border transition-all"></div>
-            <div class="flex flex-col items-center" style="min-width:90px">
-                <div id="stepper-circle-4" class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all border-ak-border text-ak-muted">4</div>
-                <p class="text-xs mt-1.5 font-medium text-ak-muted text-center leading-tight whitespace-nowrap">Share</p>
-            </div>
         </div>
     </div>
 
@@ -244,49 +239,12 @@
                 </div>
             </div>
 
-            <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-4">
-                <p class="text-ak-muted text-sm">Payment processing will be added in the final version. Your booking will be confirmed immediately.</p>
+            <div class="bg-ak-card border border-ak-border rounded-xl px-5 py-3 mb-4 flex items-start gap-3">
+                <img src="/static/img/tick.svg" alt="" class="w-4 h-4 invert mt-0.5 flex-shrink-0">
+                <p class="text-ak-muted text-sm">You'll be taken to our secure payment provider (Stripe) to complete your booking. Your spot is held while you pay.</p>
             </div>
 
             <p id="payment-error" class="hidden text-sm text-red-400 mb-3"></p>
-        </div>
-    </div>
-
-    <div id="step-5" class="hidden">
-        <div class="text-center py-6 max-w-lg mx-auto">
-            <div class="w-16 h-16 rounded-full bg-green-500 bg-opacity-20 flex items-center justify-center mx-auto mb-4">
-                <img src="/static/img/tick.svg" alt="" class="w-8 h-8 invert">
-            </div>
-            <h1 class="text-3xl font-bold text-white mb-2">Booking Confirmed!</h1>
-            <p class="text-ak-muted text-sm mb-8">Your session has been booked. See you on the track!</p>
-
-            <div class="bg-ak-card border border-ak-border rounded-xl p-6 text-left mb-4">
-                <p class="text-white font-semibold mb-4">Booking Details</p>
-                <div class="space-y-2.5 text-sm">
-                    <div class="flex justify-between"><span class="text-ak-muted">Reference</span><span id="conf-ref" class="text-white font-mono font-bold"></span></div>
-                    <div class="flex justify-between"><span class="text-ak-muted">Date</span><span id="conf-date" class="text-white font-medium"></span></div>
-                    <div class="flex justify-between"><span class="text-ak-muted">Time</span><span id="conf-time" class="text-white font-medium"></span></div>
-                    <div class="flex justify-between"><span class="text-ak-muted">Drivers</span><span id="conf-drivers" class="text-white font-medium"></span></div>
-                    <div class="flex justify-between"><span class="text-ak-muted">Package</span><span id="conf-package" class="text-white font-medium"></span></div>
-                    <div class="border-t border-ak-border pt-2.5 flex justify-between">
-                        <span class="text-white font-semibold">Total Paid</span>
-                        <span id="conf-total" class="text-white font-bold text-lg"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <button id="btn-share-link" type="button"
-                        class="bg-ak-card border border-ak-border hover:border-ak-purple text-white font-medium text-sm px-6 py-2.5 rounded-full transition-colors flex items-center justify-center gap-2">
-                    <img src="/static/img/share.svg" alt="" class="w-4 h-4 invert">
-                    Copy Share Link
-                </button>
-                <a href="/dashboard"
-                   class="bg-ak-purple hover:bg-purple-600 text-white font-medium text-sm px-6 py-2.5 rounded-full transition-colors text-center">
-                    Go to Dashboard
-                </a>
-            </div>
-            <p id="share-copied-msg" class="hidden text-green-400 text-sm mt-3">Link copied to clipboard!</p>
         </div>
     </div>
 

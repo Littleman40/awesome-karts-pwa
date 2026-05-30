@@ -43,8 +43,7 @@
 
 <div class="flex min-h-screen">
 
-    <!-- sidebar -->
-    <aside class="hidden md:flex flex-col w-60 shrink-0 bg-ak-card border-r border-ak-border">
+    <aside class="hidden md:flex flex-col w-60 shrink-0 bg-ak-card border-r border-ak-border sticky top-0 h-screen">
         <div class="px-5 py-5 border-b border-ak-border">
             <p class="text-white font-bold text-base leading-tight">Admin Panel</p>
         </div>
@@ -85,7 +84,6 @@
         </div>
     </aside>
 
-    <!-- main column -->
     <div class="flex-1 min-w-0 flex flex-col">
         <main class="flex-1 min-w-0 px-6 py-6">
             {% block content %}{% endblock %}

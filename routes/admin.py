@@ -1,3 +1,4 @@
+# our admin panel routes
 import re
 from datetime import datetime, date as date_type, timedelta
 
@@ -5,28 +6,33 @@ from flask import Blueprint, request, jsonify, session
 from bson import ObjectId
 from bson.errors import InvalidId
 
+import stripe
+
 from extensions import mongo
 from models import booking as booking_model
 from models import minor as minor_model
 from models import settings as settings_model
 from models.booking import fn_format_hour_label, PACKAGE_LABELS
+from services import stripe_service
+from services import email_service
 from utils.auth_decorators import fn_admin_required
 
+# everything an admin frontend talks to lives under /api/admin
+admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
-admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")                # everything an admin frontend talks to lives under /api/admin
-
-
-def fn_ok(data=None, http_status=200):                                          # success response, same shape as everywhere else
+# success response, same shape as everywhere else
+def fn_ok(data=None, http_status=200):
     if data is None:
         data = {}
     return jsonify({"success": True, "data": data}), http_status
 
-
-def fn_error(message, http_status=400):                                         # error response, same shape as everywhere else
+# error response, same shape as everywhere else
+def fn_error(message, http_status=400):
     return jsonify({"success": False, "error": message}), http_status
 
 
-def fn_parse_date_string(date_string):                                          # parses YYYY-MM-DD into a midnight datetime (matches how bookings/slots store dates)
+# parses YYYY-MM-DD into a midnight datetime (matches how bookings/slots store dates)
+def fn_parse_date_string(date_string):
     if not isinstance(date_string, str) or not date_string:
         return None
     try:
@@ -35,7 +41,8 @@ def fn_parse_date_string(date_string):                                          
         return None
 
 
-def fn_format_user_summary(user_doc):                                           # tiny user dict for inclusion in booking detail
+# tiny user dict for inclusion in booking detail
+def fn_format_user_summary(user_doc):
     if not user_doc:
         return None
     return {
@@ -47,12 +54,14 @@ def fn_format_user_summary(user_doc):                                           
     }
 
 
-def fn_get_max_capacity():                                                      # one source of truth for the "50 per slot" rule that comes from business_settings
+# one source of truth for the "50 per slot" rule that comes from business_settings
+def fn_get_max_capacity():
     settings = settings_model.fn_get_or_create_settings(mongo)
     return settings.get("max_capacity_per_slot", booking_model.MAX_CAPACITY_DEFAULT)
 
 
-def fn_decrement_slot_capacity(booking_doc):                                    # used by cancel and refund to give the slot capacity back
+# used by cancel and refund to give the slot capacity back
+def fn_decrement_slot_capacity(booking_doc):
     total_drivers = booking_doc.get("total_drivers", 0)
     booking_date = booking_doc.get("date")
     time_slot = booking_doc.get("time_slot")
@@ -63,14 +72,15 @@ def fn_decrement_slot_capacity(booking_doc):                                    
         )
 
 
-def fn_format_booking_for_admin(booking_doc, creator_user_doc=None):            # converts a mongo booking doc into a json-safe dict for the admin UI; pass creator_user_doc to avoid a second find_one
+# converts a mongo booking doc into a json-safe dict for the admin UI; pass creator_user_doc to avoid a second find_one
+def fn_format_booking_for_admin(booking_doc, creator_user_doc=None):
     booking_date = booking_doc.get("date")
     if creator_user_doc is None and booking_doc.get("creator_user_id") is not None:
         creator_user_doc = mongo.db.users.find_one({"_id": booking_doc["creator_user_id"]})
 
     return {
         "id": str(booking_doc["_id"]),
-        "ref": str(booking_doc["_id"])[-6:].upper(),                            # last 6 chars of ObjectId, same convention as the user-facing dashboard
+        "ref": str(booking_doc["_id"])[-6:].upper(),
         "date": booking_date.strftime("%Y-%m-%d") if booking_date else "",
         "time_slot": booking_doc.get("time_slot", 0),
         "time_label": fn_format_hour_label(booking_doc.get("time_slot", 0)),
@@ -100,9 +110,11 @@ def fn_get_bookings_by_date():
     weekday_key = target_date.strftime("%A").lower()
     day_hours = opening_hours.get(weekday_key)
 
-    blocked_day_doc = mongo.db.blocked_days.find_one({"date": target_date})     # day-wide block surfaces in the response so the UI can show a warning banner
+    # day-wide block surfaces in the response so the UI can show a warning banner
+    blocked_day_doc = mongo.db.blocked_days.find_one({"date": target_date})
 
-    if day_hours is None:                                                       # closed for the day; no hours to show
+    # closed for the day; no hours to show
+    if day_hours is None:
         return fn_ok({
             "date": target_date.strftime("%Y-%m-%d"),
             "weekday": weekday_key,
@@ -113,13 +125,16 @@ def fn_get_bookings_by_date():
 
     hours_in_day = list(range(day_hours["open"], day_hours["close"]))
 
-    booking_docs = list(mongo.db.bookings.find({                                # fetch ALL bookings on this date in one query, then bucket by hour client-side
+    # fetch ALL bookings on this date in one query, then bucket by hour client-side
+    booking_docs = list(mongo.db.bookings.find({                                
         "date": target_date,
         "time_slot": {"$in": hours_in_day},
     }).sort("time_slot", 1))
 
     creator_ids = list({b["creator_user_id"] for b in booking_docs if b.get("creator_user_id")})
-    creators_by_id = {}                                                         # batch fetch creator users for efficiency
+    
+    # batch fetch creator users for efficiency
+    creators_by_id = {}                                                         
     if creator_ids:
         for user_doc in mongo.db.users.find({"_id": {"$in": creator_ids}}):
             creators_by_id[user_doc["_id"]] = user_doc
@@ -131,7 +146,8 @@ def fn_get_bookings_by_date():
             fn_format_booking_for_admin(booking_doc, creator),
         )
 
-    slot_blocked_lookup = {}                                                    # hour -> {is_blocked, blocked_reason} so the settings page can render per-hour block buttons
+    # hour -> {is_blocked, blocked_reason} so the settings page can render per-hour block buttons
+    slot_blocked_lookup = {}                                                    
     for slot_doc in mongo.db.slots.find({"date": target_date}):
         slot_blocked_lookup[slot_doc.get("hour")] = {
             "is_blocked": slot_doc.get("is_blocked", False),
@@ -142,7 +158,9 @@ def fn_get_bookings_by_date():
     hours_payload = []
     for hour in hours_in_day:
         hour_bookings = bookings_by_hour.get(hour, [])
-        drivers_total = sum(                                                    # sum drivers across active bookings only - cancelled/refunded don't count toward the hour total
+        
+        # sum drivers across active bookings only - cancelled/refunded don't count toward the hour total
+        drivers_total = sum(                                                    
             b.get("total_drivers", 0) for b in hour_bookings
             if b.get("payment_status") not in ("cancelled", "refunded")
         )
@@ -166,7 +184,8 @@ def fn_get_bookings_by_date():
     })
 
 
-@admin_bp.route("/bookings/create", methods=["POST"])                           # manual booking (phone-in customer) - admin specifies the customer by email, payment is marked paid immediately
+# manual booking, admin specifies the customer by email, payment is marked paid immediately
+@admin_bp.route("/bookings/create", methods=["POST"])                           
 @fn_admin_required
 def fn_create_booking_manually():
     request_data = request.get_json(silent=True)
@@ -176,7 +195,9 @@ def fn_create_booking_manually():
     customer_email = (request_data.get("customer_email") or "").strip().lower()
     if not customer_email:
         return fn_error("Customer email is required.")
-    customer_user = mongo.db.users.find_one({"email": customer_email})          # the booking is linked to an EXISTING user - admin can't conjure accounts
+    
+    # the booking is linked to an existing account
+    customer_user = mongo.db.users.find_one({"email": customer_email})          
     if customer_user is None:
         return fn_error("No user found with that email. The customer must register first.")
 
@@ -205,7 +226,8 @@ def fn_create_booking_manually():
     if package_id == "4_plus" and extra_rides < 1:
         return fn_error("Please specify at least 1 extra ride for the custom package.")
 
-    booking_payload = {                                                         # delegate the heavy lifting to the booking model
+    # delegate the heavy lifting to the booking model
+    booking_payload = {                                                         
         "date": booking_date,
         "time_slot": time_slot,
         "adult_count": adult_count,
@@ -215,11 +237,20 @@ def fn_create_booking_manually():
     }
     booking_id, share_token, error_message = booking_model.fn_create_booking(
         mongo,
-        str(customer_user["_id"]),                                              # pass the customer's id as the creator
+        str(customer_user["_id"]),
         booking_payload,
     )
     if error_message is not None:
         return fn_error(error_message)
+
+    # let the customer know a booking was created for them - fire-and-forget
+    try:
+        created_booking_doc = booking_model.fn_find_booking_by_id(mongo, booking_id)
+        if created_booking_doc is not None:
+            email_service.fn_send_admin_created_booking(created_booking_doc, customer_user)
+    except Exception as admin_created_email_error:
+        from flask import current_app
+        current_app.logger.warning(f"Admin-created booking email failed for {booking_id}: {admin_created_email_error}")
 
     return fn_ok({
         "booking_id": booking_id,
@@ -266,6 +297,16 @@ def fn_cancel_booking(booking_id_string):
 
     mongo.db.bookings.update_one({"_id": booking_object_id}, {"$set": {"payment_status": "cancelled"}})
     fn_decrement_slot_capacity(booking_doc)
+
+    # notify the booking creator only - fire-and-forget so a send failure never blocks the cancellation
+    try:
+        creator_user = mongo.db.users.find_one({"_id": booking_doc.get("creator_user_id")})
+        if creator_user is not None:
+            email_service.fn_send_booking_cancelled(booking_doc, creator_user, was_paid=(current_status == "paid"))
+    except Exception as cancel_email_error:
+        from flask import current_app
+        current_app.logger.warning(f"Cancellation email failed for booking {booking_id_string}: {cancel_email_error}")
+
     return fn_ok({"status": "cancelled"})
 
 
@@ -282,35 +323,64 @@ def fn_refund_booking(booking_id_string):
     current_status = booking_doc.get("payment_status", "")
     if current_status in ("cancelled", "refunded"):
         return fn_ok({"already": current_status})
+    
+    # can only refund money that was actually captured
+    if current_status != "paid":
+        return fn_error("Only paid bookings can be refunded.")
 
-    # v2: no real money moves - status change only. v3 will call Stripe before this update.
-    mongo.db.bookings.update_one({"_id": booking_object_id}, {"$set": {"payment_status": "refunded"}})
+    payment_intent_id = booking_doc.get("stripe_payment_id")
+    # real Stripe refund - reverses the test-mode charge
+    if stripe_service.fn_is_configured() and payment_intent_id:
+        try:
+            stripe_service.fn_create_refund(payment_intent_id)
+
+        # Stripe rejected the refundtus
+        except stripe.error.StripeError as refund_error:
+            return fn_error(f"Stripe refund failed: {getattr(refund_error, 'user_message', None) or str(refund_error)}")
+
+    mongo.db.bookings.update_one(
+        {"_id": booking_object_id},
+        {"$set": {"payment_status": "refunded", "refunded_at": datetime.utcnow()}},
+    )
     fn_decrement_slot_capacity(booking_doc)
+
+    # confirm the refund to the booking creator - only reached after the Stripe refund succeeded
+    try:
+        creator_user = mongo.db.users.find_one({"_id": booking_doc.get("creator_user_id")})
+        if creator_user is not None:
+            email_service.fn_send_refund_confirmation(booking_doc, creator_user)
+    except Exception as refund_email_error:
+        from flask import current_app
+        current_app.logger.warning(f"Refund email failed for booking {booking_id_string}: {refund_email_error}")
+
     return fn_ok({"status": "refunded"})
 
 
-# CUSTOMERS - smart search + profile
 
-def fn_build_pattern_from_user_input(user_input):                               # converts an admin search token (with optional *) into an anchored case-insensitive regex
+# converts an admin search token (with optional *) into an anchored case-insensitive regex
+def fn_build_pattern_from_user_input(user_input):
     user_input = (user_input or "").strip()
     if not user_input:
         return None
-    escaped = re.escape(user_input)                                             # escape every special char so '.' / '+' / '?' etc are taken as literals
-    pattern_with_wildcards = escaped.replace(r"\*", ".*")                       # then re-interpret \* (the escaped form of *) as ".*"
-    return "^" + pattern_with_wildcards + "$"                                   # anchor so "h*" doesn't match "phil"
+    escaped = re.escape(user_input)
+    pattern_with_wildcards = escaped.replace(r"\*", ".*")
+    return "^" + pattern_with_wildcards + "$"
 
 
 @admin_bp.route("/customers", methods=["GET"])
 @fn_admin_required
 def fn_search_customers():
     query_text = (request.args.get("q") or "").strip()
-    if not query_text:                                                          # empty query returns nothing - admin must search deliberately
+
+    # empty query returns nothing - admin must search deliberately
+    if not query_text:
         return fn_ok({"customers": [], "count": 0, "mode": "empty"})
 
     mongo_filter = None
     search_mode = ""
 
-    if "," in query_text:                                                       # "first, last" mode - case-insensitive, wildcard supported on each side
+    # "first, last" mode - case-insensitive, wildcard supported on each side
+    if "," in query_text:
         first_part, _, last_part = query_text.partition(",")
         first_pattern = fn_build_pattern_from_user_input(first_part)
         last_pattern  = fn_build_pattern_from_user_input(last_part)
@@ -324,12 +394,14 @@ def fn_search_customers():
         mongo_filter = {"$and": conditions} if len(conditions) > 1 else conditions[0]
         search_mode = "name"
 
-    elif "@" in query_text:                                                     # email mode - wildcard supported, anchored, case-insensitive
+    # email mode - wildcard supported, anchored, case-insensitive
+    elif "@" in query_text:
         email_pattern = fn_build_pattern_from_user_input(query_text.lower())
         mongo_filter = {"email": {"$regex": email_pattern, "$options": "i"}}
         search_mode = "email"
 
-    else:                                                                       # single-token mode - match first_name OR last_name
+    # single-token mode - match first_name OR last_name
+    else:
         single_pattern = fn_build_pattern_from_user_input(query_text)
         mongo_filter = {"$or": [
             {"first_name": {"$regex": single_pattern, "$options": "i"}},
@@ -341,7 +413,7 @@ def fn_search_customers():
 
     customer_summaries = []
     for user_doc in user_docs:
-        dob_value = user_doc.get("dob")                                         # bookings count and created_at are no longer shown in the search list - moved to the profile modal
+        dob_value = user_doc.get("dob")
         customer_summaries.append({
             "id": str(user_doc["_id"]),
             "first_name": user_doc.get("first_name", ""),
@@ -365,7 +437,8 @@ def fn_get_customer_profile(user_id_string):
     if user_doc is None:
         return fn_error("Customer not found.", 404)
 
-    user_bookings_docs = list(mongo.db.bookings.find(                           # all bookings this user is linked to (created OR shared)
+    # all bookings this user is linked to (created OR shared)
+    user_bookings_docs = list(mongo.db.bookings.find(                           
         {"linked_user_ids": user_object_id}
     ).sort([("date", -1), ("time_slot", -1)]))
     formatted_bookings = [fn_format_booking_for_admin(b) for b in user_bookings_docs]
@@ -394,7 +467,6 @@ def fn_get_customer_profile(user_id_string):
     })
 
 
-# DAYS - block/unblock days (used by the settings calendar)
 
 @admin_bp.route("/days", methods=["GET"])
 @fn_admin_required
@@ -403,10 +475,12 @@ def fn_get_days_overview():
     if from_date is None:
         from_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     to_date = fn_parse_date_string(request.args.get("to"))
+    
+    # default 2-month window for the settings calendar
     if to_date is None:
-        to_date = from_date + timedelta(days=60)                                # default 2-month window for the settings calendar
+        to_date = from_date + timedelta(days=60)
 
-    blocked_day_lookup = {}                                                     # date string -> reason
+    blocked_day_lookup = {}
     for blocked_day_doc in mongo.db.blocked_days.find({
         "date": {"$gte": from_date, "$lt": to_date + timedelta(days=1)},
     }):
@@ -435,7 +509,9 @@ def fn_block_day():
     if target_date is None:
         return fn_error("Invalid date.")
     reason = (request_data.get("reason") or "").strip()
-    mongo.db.blocked_days.update_one(                                           # upsert so calling block twice doesn't create duplicate rows
+
+    # upsert so calling block twice doesn't create duplicate rows
+    mongo.db.blocked_days.update_one(
         {"date": target_date},
         {"$set": {"date": target_date, "reason": reason}},
         upsert=True,
@@ -468,7 +544,9 @@ def fn_block_slot():
     if not (0 <= hour <= 23):
         return fn_error("Hour must be between 0 and 23.")
     reason = (request_data.get("reason") or "").strip()
-    mongo.db.slots.update_one(                                                  # upsert - if no slot doc exists yet we create one as blocked with zero bookings
+    
+    # upsert - if no slot doc exists yet we create one as blocked with zero bookings
+    mongo.db.slots.update_one(
         {"date": target_date, "hour": hour},
         {"$set": {"is_blocked": True, "blocked_reason": reason},
          "$setOnInsert": {"booked_count": 0}},
@@ -494,8 +572,6 @@ def fn_unblock_slot():
     )
     return fn_ok({"date": target_date.strftime("%Y-%m-%d"), "hour": hour, "blocked": False})
 
-
-# SETTINGS - GET/PUT /api/admin/settings
 
 @admin_bp.route("/settings", methods=["GET"])
 @fn_admin_required

@@ -1,10 +1,11 @@
+// client sided js allowing for nice admin panels - functions and also popups etc
 (function () {
     "use strict";
 
-
-    async function fnFetchJSON(requestUrl, fetchOptions) {                                  // fetch wrapper that always returns { ok, status, data } so callers don't repeat try/catch json
+    // fetch wrapper that always returns { ok, status, data } so callers don't repeat try/catch json
+    async function fnFetchJSON(requestUrl, fetchOptions) {
         fetchOptions = fetchOptions || {};
-        fetchOptions.credentials = "same-origin";                                           // include session cookie so admin_id is sent
+        fetchOptions.credentials = "same-origin";
         var response = await fetch(requestUrl, fetchOptions);
         var responseData = {};
         try {
@@ -13,7 +14,8 @@
         return { ok: response.ok, status: response.status, data: responseData };
     }
 
-    async function fnPostJSON(requestUrl, requestBody) {                                    // shorthand for json post
+    // shorthand for json post
+    async function fnPostJSON(requestUrl, requestBody) {
         return fnFetchJSON(requestUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -40,7 +42,7 @@
         return "$" + amount.toFixed(2);
     }
 
-    function fnEscapeHtml(rawString) {                                                      // safe interpolation for table cells - never let server data become html
+    function fnEscapeHtml(rawString) {
         if (rawString === null || rawString === undefined) return "";
         return String(rawString)
             .replace(/&/g, "&amp;")
@@ -50,14 +52,21 @@
             .replace(/'/g, "&#039;");
     }
 
-    function fnFormatDateNice(yyyyMmDdString) {                                             // "2026-05-24" -> "Sun 24 May 2026"
+    // "2026-05-24" -> "Sun 24 May 2026"
+    function fnFormatDateNice(yyyyMmDdString) {
         if (!yyyyMmDdString) return "";
         var parsedDate = new Date(yyyyMmDdString + "T00:00:00");
         if (isNaN(parsedDate.getTime())) return yyyyMmDdString;
-        return parsedDate.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+        return parsedDate.toLocaleDateString("en-AU", { 
+            weekday: "short", 
+            day: "numeric", 
+            month: "short", 
+            year: "numeric" 
+        });
     }
 
-    function fnStatusBadge(status) {                                                        // coloured status pill html
+    // coloured status pill html
+    function fnStatusBadge(status) {
         var label = (status || "").toUpperCase();
         var classes = "px-2 py-0.5 rounded-full text-[10px] font-semibold border";
         if (status === "paid")           classes += " bg-green-500/10 border-green-500/40 text-green-400";
@@ -69,8 +78,7 @@
     }
 
     function fnPad2(n) { return n < 10 ? "0" + n : "" + n; }
-
-    function fnFormatDateISO(dateObj) {                                                     // YYYY-MM-DD in local time (matches the public booking calendar's convention)
+    function fnFormatDateISO(dateObj) {                                                     
         return dateObj.getFullYear() + "-" + fnPad2(dateObj.getMonth() + 1) + "-" + fnPad2(dateObj.getDate());
     }
 
@@ -79,7 +87,7 @@
         return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     }
 
-    function fnTodayLocal() {                                                               // local-time today at midnight
+    function fnTodayLocal() {
         var d = new Date();
         return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     }
@@ -125,9 +133,23 @@
     }
 
 
-    var MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var MONTH_NAMES = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ];
 
-    function fnRenderCalendarGrid(rootIds, state, opts) {                                   // rootIds = { titleId, gridId, prevId, nextId }, opts = { decorateCell, allowPrev, allowNext, displayInfoId, displayInfoText }
+    // rootIds = { titleId, gridId, prevId, nextId }, opts = { decorateCell, allowPrev, allowNext, displayInfoId, displayInfoText }
+    function fnRenderCalendarGrid(rootIds, state, opts) {
         var titleEl = document.getElementById(rootIds.titleId);
         var gridEl  = document.getElementById(rootIds.gridId);
         var prevBtn = document.getElementById(rootIds.prevId);
@@ -167,15 +189,19 @@
             cell.textContent = day;
             cell.setAttribute("data-date", dayIso);
             cell.className = "h-9 rounded-lg text-sm font-medium flex items-center justify-center transition-colors";
-            opts.decorateCell(dayIso, dayDate, today, cell);                                // caller adds colour, click handler, disabled state, etc
+            opts.decorateCell(dayIso, dayDate, today, cell);
             gridEl.appendChild(cell);
         }
     }
 
 
     var bookingsCalState = { offset: 0, selectedIso: null };
-    var BOOKINGS_PAST_MONTHS = 12;                                                          // how far back the admin can browse (1 year is plenty)
-    var BOOKINGS_FUTURE_MONTHS = 6;                                                         // and how far forward
+
+    // how far back the admin can browse (1 year is plenty)
+    var BOOKINGS_PAST_MONTHS = 12;
+
+    // and how far forward
+    var BOOKINGS_FUTURE_MONTHS = 6;
 
     function fnDecorateBookingsCell(dayIso, dayDate, today, cell) {
         var isSelected = bookingsCalState.selectedIso === dayIso;
@@ -236,7 +262,9 @@
         }
 
         var hours = data.hours || [];
-        if (hours.length === 0 && !data.is_day_blocked) {                                   // closed weekday or no opening hours
+
+        // closed weekday or no opening hours
+        if (hours.length === 0 && !data.is_day_blocked) {                                   
             loadingEl.textContent = "Closed on this weekday (no opening hours set).";
             return;
         }
@@ -246,8 +274,10 @@
         listEl.innerHTML = "";
         hours.forEach(function (hour) {
             totalDriversDay += hour.drivers_total;
-            var activeBookings = hour.bookings.filter(function (b) { return b.payment_status !== "cancelled" && b.payment_status !== "refunded"; });
-            totalBookingsDay += activeBookings.length;
+
+            // only count / show paid bookings on this page
+            var paidBookings = hour.bookings.filter(function (b) { return b.payment_status === "paid"; });
+            totalBookingsDay += paidBookings.length;
 
             var headerHtml =
                 '<div class="flex items-center justify-between px-4 py-2 bg-ak-border/40">' +
@@ -256,16 +286,18 @@
                 '</div>';
 
             var bookingsHtml = "";
-            if (hour.bookings.length === 0) {
-                bookingsHtml = '<div class="px-4 py-3 text-ak-muted text-xs">No bookings.</div>';
+            if (paidBookings.length === 0) {
+                bookingsHtml = '<div class="px-4 py-3 text-ak-muted text-xs">No paid bookings.</div>';
             } else {
-                bookingsHtml = hour.bookings.map(function (booking) {
-                    var customerName = "(unknown)";
+                bookingsHtml = paidBookings.map(function (booking) {
+                    var customerName  = "(unknown)";
                     var customerEmail = "";
+                    var creatorId     = "";
                     if (booking.creator) {
                         customerName = (booking.creator.first_name + " " + booking.creator.last_name).trim();
-                        if (!customerName) customerName = booking.creator.email || "(unknown)";
+                        if (!customerName) { customerName = booking.creator.email || "(unknown)"; }
                         customerEmail = booking.creator.email || "";
+                        creatorId     = booking.creator.id   || "";
                     }
                     return '<div class="px-4 py-3 flex flex-wrap items-center gap-3 justify-between">' +
                         '<div class="min-w-0">' +
@@ -275,7 +307,7 @@
                         '<div class="flex items-center gap-3 shrink-0">' +
                             '<p class="text-ak-muted text-xs"><span class="text-white">' + booking.adult_count + 'A + ' + booking.junior_count + 'J</span> &middot; ' + fnEscapeHtml(booking.package_label) + '</p>' +
                             fnStatusBadge(booking.payment_status) +
-                            '<button data-action="view"   data-id="' + fnEscapeHtml(booking.id) + '" class="text-xs text-white border border-ak-border hover:border-ak-purple px-2 py-1 rounded-full transition-colors">View</button>' +
+                            '<button data-action="view"   data-id="' + fnEscapeHtml(booking.id) + '" data-creator-id="' + fnEscapeHtml(creatorId) + '" class="text-xs text-white border border-ak-border hover:border-ak-purple px-2 py-1 rounded-full transition-colors">View Customer</button>' +
                             '<button data-action="cancel" data-id="' + fnEscapeHtml(booking.id) + '" class="text-xs text-red-400 border border-red-500/40 hover:bg-red-500 hover:text-white px-2 py-1 rounded-full transition-colors">Cancel</button>' +
                             '<button data-action="refund" data-id="' + fnEscapeHtml(booking.id) + '" class="text-xs text-blue-400 border border-blue-500/40 hover:bg-blue-500 hover:text-white px-2 py-1 rounded-full transition-colors">Refund</button>' +
                         '</div>' +
@@ -294,9 +326,10 @@
         listEl.classList.remove("hidden");
     }
 
-    async function fnHandleBookingAction(action, bookingId) {
+    async function fnHandleBookingAction(action, bookingId, creatorId) {
         if (action === "view") {
-            await fnOpenBookingDetail(bookingId);
+            // navigate to the customer profile page
+            if (creatorId) { window.location.href = "/admin/customers/" + creatorId; }
             return;
         }
         if (action === "cancel") {
@@ -310,7 +343,7 @@
             return;
         }
         if (action === "refund") {
-            if (!confirm("Refund this booking? In v2 this only changes the status; v3 will trigger a real Stripe refund. The slot capacity will be freed.")) return;
+            if (!confirm("Refund this booking? This issues a Stripe refund (test mode) and frees the slot capacity.")) return;
             var refundResult = await fnPostJSON("/api/admin/bookings/" + encodeURIComponent(bookingId) + "/refund", {});
             if (!refundResult.ok || !refundResult.data.success) {
                 alert((refundResult.data && refundResult.data.error) || "Could not refund booking.");
@@ -321,7 +354,9 @@
         }
     }
 
-    async function fnOpenBookingDetail(bookingId) {                                         // GET /api/admin/bookings/<id> and render the modal
+
+    // GET /api/admin/bookings/<id> and render the modal
+    async function fnOpenBookingDetail(bookingId) {                                         
         var result = await fnFetchJSON("/api/admin/bookings/" + encodeURIComponent(bookingId));
         if (!result.ok || !result.data.success) {
             alert("Could not load booking detail.");
@@ -363,7 +398,11 @@
         document.getElementById("bk-hours-list").addEventListener("click", function (clickEvent) {
             var target = clickEvent.target.closest("button[data-action]");
             if (!target) return;
-            fnHandleBookingAction(target.getAttribute("data-action"), target.getAttribute("data-id"));
+            fnHandleBookingAction(
+                target.getAttribute("data-action"),
+                target.getAttribute("data-id"),
+                target.getAttribute("data-creator-id")
+            );
         });
 
         document.querySelectorAll("[data-close-detail]").forEach(function (btn) {
@@ -383,7 +422,7 @@
             document.getElementById("m-adults").value = 1;
             document.getElementById("m-juniors").value = 0;
             document.getElementById("m-extra").value = 0;
-            if (bookingsCalState.selectedIso) {                                             // pre-fill the date field with whatever the admin's looking at
+            if (bookingsCalState.selectedIso) {
                 document.getElementById("m-date").value = bookingsCalState.selectedIso;
             }
             document.getElementById("manual-booking-modal").classList.remove("hidden");
@@ -407,7 +446,8 @@
                 return;
             }
             document.getElementById("manual-booking-modal").classList.add("hidden");
-            if (payload.date) {                                                             // jump the calendar to the newly created booking's date and refresh the hour view
+            // jump the calendar to the newly created booking's date and refresh the hour view
+            if (payload.date) {
                 bookingsCalState.selectedIso = payload.date;
                 var today = fnTodayLocal();
                 var picked = fnParseDateISO(payload.date);
@@ -420,7 +460,7 @@
 
     function fnInitBookingsPage() {
         var todayIso = fnFormatDateISO(fnTodayLocal());
-        bookingsCalState.selectedIso = todayIso;                                            // start on today
+        bookingsCalState.selectedIso = todayIso;
         fnWireBookingsPage();
         fnRenderBookingsCalendar();
         fnLoadBookingsForDate(todayIso);
@@ -525,7 +565,7 @@
     function fnWireCustomersPage() {
         function fnDoSearch() {
             var queryText = document.getElementById("cust-search").value.trim();
-            if (!queryText) {                                                               // refuse empty searches - show the empty-state hint instead
+            if (!queryText) {
                 document.getElementById("cust-table-wrapper").classList.add("hidden");
                 document.getElementById("cust-empty-state").classList.remove("hidden");
                 return;
@@ -536,15 +576,12 @@
         document.getElementById("cust-search").addEventListener("keydown", function (keyEvent) {
             if (keyEvent.key === "Enter") fnDoSearch();
         });
+
+        // clicking a row navigates to the customer detail page
         document.getElementById("cust-tbody").addEventListener("click", function (clickEvent) {
             var row = clickEvent.target.closest("tr[data-customer-id]");
             if (!row) return;
-            fnOpenCustomerProfile(row.getAttribute("data-customer-id"));
-        });
-        document.querySelectorAll("[data-close-profile]").forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                document.getElementById("cust-profile-modal").classList.add("hidden");
-            });
+            window.location.href = "/admin/customers/" + row.getAttribute("data-customer-id");
         });
     }
 
@@ -595,13 +632,16 @@
     var settingsBlockState = {
         offset: 0,
         selectedIso: null,
-        isDayBlocked: false,                                                                // mirrors the most recent by-date response
-        blockedDateSet: {},                                                                 // map of YYYY-MM-DD -> reason for any date in the visible window
+        isDayBlocked: false,
+        blockedDateSet: {},
     };
-    var SET_PAST_MONTHS   = 0;                                                              // admin shouldn't block past dates
+
+    // admin shouldn't block past dates
+    var SET_PAST_MONTHS   = 0;                                                              
     var SET_FUTURE_MONTHS = 12;
 
-    async function fnRefreshSettingsBlockedDays() {                                         // pulls the visible window of blocked days so the calendar can tint them red
+    // pulls the visible window of blocked days so the calendar can tint them red
+    async function fnRefreshSettingsBlockedDays() {
         var today = fnTodayLocal();
         var fromIso = fnFormatDateISO(today);
         var toDate = new Date(today.getFullYear(), today.getMonth() + SET_FUTURE_MONTHS + 1, 0);
@@ -621,7 +661,9 @@
         var isToday    = dayDate.getTime() === today.getTime();
         var isBlocked  = Object.prototype.hasOwnProperty.call(settingsBlockState.blockedDateSet, dayIso);
         var baseClass  = cell.className;
-        if (isPast) {                                                                       // past dates are non-interactive
+
+        // past dates are non-interactive
+        if (isPast) {
             cell.className = baseClass + " text-ak-hint cursor-not-allowed opacity-40";
             cell.disabled = true;
             return;
@@ -657,7 +699,9 @@
         );
     }
 
-    function fnUpdateDayBlockButton() {                                                     // refreshes the button label and colour to match the current selection
+
+    // refreshes the button label and colour to match the current selection
+    function fnUpdateDayBlockButton() {
         var btn = document.getElementById("btn-set-block-day");
         if (!btn) return;
         if (!settingsBlockState.selectedIso) {
@@ -784,7 +828,9 @@
         }
         await fnRefreshSettingsBlockedDays();
         fnRenderSettingsCalendar();
-        await fnLoadSettingsHoursForDate(dateIso);                                          // reload to refresh banner + button label
+
+        // reload to refresh banner + button label
+        await fnLoadSettingsHoursForDate(dateIso);
     }
 
     async function fnToggleSettingsHourBlock(hour, currentlyBlocked) {
@@ -806,7 +852,9 @@
                 return;
             }
         }
-        await fnLoadSettingsHoursForDate(dateIso);                                          // refresh the hour list to update button labels and ring colours
+
+        // refresh the hour list to update button labels and ring colours
+        await fnLoadSettingsHoursForDate(dateIso);
     }
 
     function fnWireSettingsBlockSection() {
@@ -833,15 +881,164 @@
         await fnRefreshSettingsBlockedDays();
 
         var todayIso = fnFormatDateISO(fnTodayLocal());
-        settingsBlockState.selectedIso = todayIso;                                          // start on today so admin sees something immediately
+
+        // start on today so admin sees something immediately
+        settingsBlockState.selectedIso = todayIso;                                          
         fnRenderSettingsCalendar();
         fnUpdateDayBlockButton();
         fnLoadSettingsHoursForDate(todayIso);
     }
 
 
+    // customer detail page - loads and renders a full customer profile
+    async function fnLoadCustomerDetail(userId) {
+        var loadingEl = document.getElementById("cd-loading");
+        var errorEl   = document.getElementById("cd-error");
+        var bodyEl    = document.getElementById("cd-body");
+
+        var result = await fnFetchJSON("/api/admin/customers/" + encodeURIComponent(userId));
+
+        if (!result.ok || !result.data.success) {
+            if (loadingEl) { loadingEl.classList.add("hidden"); }
+            if (errorEl) {
+                errorEl.textContent = (result.data && result.data.error) || "Could not load customer.";
+                errorEl.classList.remove("hidden");
+            }
+            return;
+        }
+
+        var customer = result.data.data;
+
+        // update the header
+        var nameEl  = document.getElementById("cd-name");
+        var emailEl = document.getElementById("cd-email");
+        var fullName = (customer.first_name + " " + customer.last_name).trim();
+        if (nameEl)  { nameEl.textContent  = fullName || "(no name)"; }
+        if (emailEl) { emailEl.textContent = customer.email || ""; }
+
+        fnRenderCustomerDetails(customer);
+        fnRenderCustomerWaiver(customer);
+        fnRenderCustomerMinors(customer.minors || []);
+        fnRenderCustomerBookings(customer.bookings || [], userId);
+
+        if (loadingEl) { loadingEl.classList.add("hidden"); }
+        if (bodyEl)    { bodyEl.classList.remove("hidden"); }
+    }
+
+    function fnRenderCustomerDetails(customer) {
+        var el = document.getElementById("cd-details");
+        if (!el) return;
+        var fields = [
+            ["Phone",        customer.phone   || "-"],
+            ["Date of Birth", customer.dob    || "-"],
+            ["Gender",       customer.gender  || "-"],
+            ["Member Since", customer.created_at ? customer.created_at.substring(0, 10) : "-"],
+            ["Address",      customer.address || "-"],
+        ];
+        el.innerHTML = fields.map(function (f) {
+            return '<div><p class="text-ak-muted text-xs mb-0.5">' + fnEscapeHtml(f[0]) + '</p>' +
+                   '<p class="text-white">' + fnEscapeHtml(f[1]) + '</p></div>';
+        }).join("");
+    }
+
+    function fnRenderCustomerWaiver(customer) {
+        var el = document.getElementById("cd-waiver");
+        if (!el) return;
+        if (customer.waiver_accepted) {
+            var signedAt = customer.waiver_accepted_at
+                ? new Date(customer.waiver_accepted_at).toLocaleDateString("en-AU") : "";
+            el.innerHTML = '<span class="text-green-400 font-medium">Signed</span>' +
+                (signedAt ? '<span class="text-ak-muted text-xs ml-2">on ' + fnEscapeHtml(signedAt) + '</span>' : '');
+        } else {
+            el.innerHTML = '<span class="text-red-400 font-medium">Not signed</span>';
+        }
+    }
+
+    function fnRenderCustomerMinors(minors) {
+        var el = document.getElementById("cd-minors");
+        if (!el) return;
+        if (!minors.length) {
+            el.innerHTML = '<p class="text-ak-muted text-sm">No minors registered.</p>';
+            return;
+        }
+        el.innerHTML = '<div class="space-y-2">' + minors.map(function (m) {
+            var waiverHtml = m.waiver_accepted
+                ? '<span class="text-green-400 text-xs font-medium">Waiver signed</span>'
+                : '<span class="text-red-400 text-xs font-medium">Waiver missing</span>';
+            return '<div class="flex items-center justify-between bg-ak-bg/40 border border-ak-border rounded-lg px-4 py-3">' +
+                '<div>' +
+                    '<p class="text-white text-sm font-medium">' + fnEscapeHtml(m.first_name + " " + m.last_name) + '</p>' +
+                    '<p class="text-ak-muted text-xs">Age ' + (m.age !== null ? m.age : "-") + '</p>' +
+                '</div>' +
+                waiverHtml +
+            '</div>';
+        }).join("") + '</div>';
+    }
+
+    function fnRenderCustomerBookings(bookings, userId) {
+        var el = document.getElementById("cd-bookings");
+        if (!el) return;
+        if (!bookings.length) {
+            el.innerHTML = '<p class="text-ak-muted text-sm">No bookings found.</p>';
+            return;
+        }
+        el.innerHTML = "";
+        bookings.forEach(function (booking) {
+            var card = document.createElement("div");
+            card.className = "bg-ak-bg/40 border border-ak-border rounded-lg px-4 py-3 flex flex-wrap items-center gap-3 justify-between";
+
+            var actionBtns = "";
+            if (booking.payment_status === "paid") {
+                actionBtns +=
+                    '<button data-action="refund" data-id="' + fnEscapeHtml(booking.id) + '" class="text-xs text-blue-400 border border-blue-500/40 hover:bg-blue-500 hover:text-white px-2 py-1 rounded-full transition-colors">Refund</button>';
+            }
+            if (booking.payment_status !== "cancelled" && booking.payment_status !== "refunded") {
+                actionBtns +=
+                    '<button data-action="cancel" data-id="' + fnEscapeHtml(booking.id) + '" class="text-xs text-red-400 border border-red-500/40 hover:bg-red-500 hover:text-white px-2 py-1 rounded-full transition-colors">Cancel</button>';
+            }
+
+            card.innerHTML =
+                '<div class="min-w-0">' +
+                    '<p class="text-white text-sm font-medium">' + fnEscapeHtml(fnFormatDateNice(booking.date)) + ' &middot; ' + fnEscapeHtml(booking.time_label) + '</p>' +
+                    '<p class="text-ak-muted text-xs">' + booking.adult_count + 'A + ' + booking.junior_count + 'J &middot; ' + fnEscapeHtml(booking.package_label) + ' &middot; ' + fnFormatCents(booking.total_amount) + '</p>' +
+                '</div>' +
+                '<div class="flex items-center gap-2 shrink-0">' + fnStatusBadge(booking.payment_status) + actionBtns + '</div>';
+            el.appendChild(card);
+        });
+
+        // wire cancel / refund buttons
+        el.addEventListener("click", async function (e) {
+            var target = e.target.closest("button[data-action]");
+            if (!target) return;
+            var action    = target.getAttribute("data-action");
+            var bookingId = target.getAttribute("data-id");
+            if (action === "cancel") {
+                if (!confirm("Cancel this booking? This frees the slot capacity.")) return;
+                var res = await fnPostJSON("/api/admin/bookings/" + encodeURIComponent(bookingId) + "/cancel", {});
+                if (!res.ok || !res.data.success) { alert((res.data && res.data.error) || "Could not cancel."); return; }
+            } else if (action === "refund") {
+                if (!confirm("Refund this booking? This issues a Stripe refund.")) return;
+                var res = await fnPostJSON("/api/admin/bookings/" + encodeURIComponent(bookingId) + "/refund", {});
+                if (!res.ok || !res.data.success) { alert((res.data && res.data.error) || "Could not refund."); return; }
+            }
+
+            // reload the page data to reflect the change
+            fnLoadCustomerDetail(userId);
+        });
+    }
+
+    function fnInitCustomerDetailPage() {
+        var root = document.getElementById("customer-detail-root");
+        if (!root) return;
+        var userId = root.getAttribute("data-user-id");
+        if (!userId) return;
+        fnLoadCustomerDetail(userId);
+    }
+
+
     var currentPath = window.location.pathname.replace(/\/$/, "");
-    if (currentPath === "/admin/bookings")         { fnInitBookingsPage(); }
-    else if (currentPath === "/admin/customers")   { fnWireCustomersPage(); }
-    else if (currentPath === "/admin/settings")    { fnInitSettingsPage(); }
+    if (currentPath === "/admin/bookings")                             { fnInitBookingsPage(); }
+    else if (currentPath === "/admin/customers")                       { fnWireCustomersPage(); }
+    else if (currentPath === "/admin/settings")                        { fnInitSettingsPage(); }
+    else if (currentPath.startsWith("/admin/customers/"))              { fnInitCustomerDetailPage(); }
 })();

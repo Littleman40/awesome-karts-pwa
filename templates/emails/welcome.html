@@ -1,0 +1,19 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}Welcome to Awesome Karts!{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 16px 0; font-size:22px; font-weight:700; color:#111827;">Welcome, {{ user.first_name }}!</h1>
+<p style="margin:0 0 16px 0;">Your account is all set up. Here's how to get racing:</p>
+
+<ul style="margin:0 0 20px 0; padding-left:20px;">
+    <li style="margin-bottom:4px;">Sign your waiver from your dashboard.</li>
+    <li style="margin-bottom:4px;">Add any minors who'll be racing under your account.</li>
+    <li style="margin-bottom:4px;">Book your first session.</li>
+</ul>
+
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px 0;">
+    <tr><td style="border-radius:8px; background-color:#A855F7;">
+        <a href="{{ dashboard_url }}" style="display:inline-block; padding:12px 28px; font-size:15px; font-weight:600; color:#FFFFFF; text-decoration:none;">Go to my dashboard</a>
+    </td></tr>
+</table>
+{% endblock %}

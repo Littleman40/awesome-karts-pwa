@@ -5,7 +5,8 @@
     var configEl = document.getElementById("bk-cfg");
     var BOOKING_IS_LOGGED_IN = configEl !== null && configEl.getAttribute("data-logged-in") === "true";
 
-    var STORAGE_KEY = "ak_booking_state";                                                                       // localStorage key, used so we can survive a page reload after the user logs in
+    // localStorage key - used so we can survive a page reload after the user logs in
+    var STORAGE_KEY = "ak_booking_state";
 
     var PACKAGE_DATA = {
         "1_ride":  {label: "1 Session",  cents: 3750},
@@ -15,27 +16,29 @@
     };
 
     var bookingState = {
-        step:        1,                                                                                         // current visible step (1-5)
-        adultCount:  0,                                                                                         // number of 16+ drivers
-        juniorCount: 0,                                                                                         // number of 8-15 drivers
-        packageId:   "1_ride",                                                                                  // default package - also pre-selected visually
-        extraRides:  1,                                                                                         // only meaningful when packageId === "4_plus"
-        date:        null,                                                                                      // ISO date string YYYY-MM-DD (or null until picked)
-        timeSlot:    null,                                                                                      // hour 0-23
-        bookingId:   null,                                                                                      // set after successful POST /api/bookings/create
-        shareToken:  null,                                                                                      // set after successful create - used by the "copy share link" button
+        step:        1,
+        adultCount:  0,
+        juniorCount: 0,
+        packageId:   "1_ride",
+        extraRides:  1,
+        date:        null,
+        timeSlot:    null,
     };
 
     function fnSaveState() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(bookingState));
-        } catch (e) {}                                                                                          // localStorage can throw, silently ignore, worst case is the user loses progress
+        } catch (e) {
+            // localStorage can throw - silently ignore, worst case is the user loses progress
+        }
     }
 
     function fnLoadState() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) { return; }                                                                               // if nothing saved then keep defaults
+
+            // if nothing saved then keep defaults
+            if (!raw) { return; }
             var parsed = JSON.parse(raw);
             if (parsed.step        !== undefined) { bookingState.step        = parsed.step; }
             if (parsed.adultCount  !== undefined) { bookingState.adultCount  = parsed.adultCount; }
@@ -44,12 +47,11 @@
             if (parsed.extraRides  !== undefined) { bookingState.extraRides  = parsed.extraRides; }
             if (parsed.date        !== undefined) { bookingState.date        = parsed.date; }
             if (parsed.timeSlot    !== undefined) { bookingState.timeSlot    = parsed.timeSlot; }
-            if (parsed.bookingId   !== undefined) { bookingState.bookingId   = parsed.bookingId; }
-            if (parsed.shareToken  !== undefined) { bookingState.shareToken  = parsed.shareToken; }
         } catch (e) {}
     }
 
-    function fnClearState() {                                                                                   // wipes saved state and resets to defaults, called after a booking is successfully made
+    // wipes saved progress and resets to defaults
+    function fnClearState() {
         try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
         bookingState.step        = 1;
         bookingState.adultCount  = 0;
@@ -58,7 +60,6 @@
         bookingState.extraRides  = 1;
         bookingState.date        = null;
         bookingState.timeSlot    = null;
-        // bookingId and shareToken are intentionally kept so the step-5 share button still works after clearing
     }
 
     function fnFormatCents(cents) {
@@ -88,27 +89,31 @@
         return days[d.getDay()] + " " + d.getDate() + " " + months[d.getMonth()];
     }
 
-    function fnCalculateTotal() {                                                                               // mirrors the server-side fn_calculate_total in models/booking.py
+    // mirrors the server-side fn_calculate_total in models/booking.py
+    function fnCalculateTotal() {
         var drivers = bookingState.adultCount + bookingState.juniorCount;
-        if (drivers < 1) { return 0; }                                                                          // no drivers chosen then show $0 in the summary
-        if (bookingState.packageId === "1_ride")  { return drivers * 3750; }                                    // $37.50/person
-        if (bookingState.packageId === "2_rides") { return drivers * 6500; }                                    // $65.00/person
-        if (bookingState.packageId === "3_rides") { return drivers * 8500; }                                    // $85.00/person
-        if (bookingState.packageId === "4_plus")  { return drivers * (8500 + bookingState.extraRides * 2000); } // 3 rides base + $20/extra ride
+        if (drivers < 1) { return 0; }
+        if (bookingState.packageId === "1_ride")  { return drivers * 3750; }
+        if (bookingState.packageId === "2_rides") { return drivers * 6500; }
+        if (bookingState.packageId === "3_rides") { return drivers * 8500; }
+        if (bookingState.packageId === "4_plus")  { return drivers * (8500 + bookingState.extraRides * 2000); }
         return 0;
     }
 
-    function fnSignalBarsHTML(status) {                                                                         // renders the 4-bar "busy meter" icon (think mobile reception bars), colour varies by slot status
-        var fills = {                                                                                           // each value is the fill colour for bars 1..4 (shortest to tallest)
-            "low":       ["#22c55e", "#22c55e", "#374151", "#374151"],                                 // 1 green
-            "medium":    ["#eab308", "#eab308", "#eab308", "#374151"],                                 // 3 yellow
-            "high":      ["#ef4444", "#ef4444", "#ef4444", "#ef4444"],                                 // all red
-            "booked_out":["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey
-            "blocked":   ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey
-            "past":      ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],                                 // all grey - hour has already passed today
+    // renders the 4-bar busy meter icon - colour varies by slot status
+    function fnSignalBarsHTML(status) {
+        var fills = {
+            "low":       ["#22c55e", "#22c55e", "#374151", "#374151"],
+            "medium":    ["#eab308", "#eab308", "#eab308", "#374151"],
+            "high":      ["#ef4444", "#ef4444", "#ef4444", "#ef4444"],
+            "booked_out":["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
+            "blocked":   ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
+            "past":      ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
         };
         var f = fills[status];
-        if (!f) { f = fills["blocked"]; }                                                                       // fallback for unknown status
+
+        // fallback for unknown status
+        if (!f) { f = fills["blocked"]; }
         return '<svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">' +
             '<rect x="0" y="11" width="3" height="3" rx="0.5" fill="' + f[0] + '"/>' +
             '<rect x="5" y="8"  width="3" height="6" rx="0.5" fill="' + f[1] + '"/>' +
@@ -117,7 +122,8 @@
             '</svg>';
     }
 
-    function fnStatusLabel(status) {                                                                            // text shown next to the bars (LOW/MEDIUM/HIGH/BOOKED OUT/CLOSED)
+    // text shown next to the bars (LOW / MEDIUM / HIGH / BOOKED OUT / CLOSED)
+    function fnStatusLabel(status) {
         if (status === "low")       { return '<span class="text-green-400 font-semibold text-xs">LOW</span>'; }
         if (status === "medium")    { return '<span class="text-yellow-400 font-semibold text-xs">MEDIUM</span>'; }
         if (status === "high")      { return '<span class="text-red-400 font-semibold text-xs">HIGH</span>'; }
@@ -129,14 +135,15 @@
 
     function fnGetStepperIndex(step) {
         if (step <= 2) { return step; }
+
+        // inline login still sits under the Date & Time node
         if (step === 3) { return 2; }
-        if (step === 4) { return 3; }
-        return 4;
+        return 3;
     }
 
     function fnUpdateStepper() {
         var active = fnGetStepperIndex(bookingState.step);
-        for (var i = 1; i <= 4; i++) {
+        for (var i = 1; i <= 3; i++) {
             var circle = document.getElementById("stepper-circle-" + i);
             var line   = document.getElementById("stepper-line-" + i);
             if (!circle) { continue; }
@@ -162,8 +169,8 @@
         }
     }
 
-
-    function fnUpdateStep1UI() {                                                                                // re-renders driver counters + package card selection state
+    // re-renders driver counters + package card selection state
+    function fnUpdateStep1UI() {
         var adultEl  = document.getElementById("adult-count");
         var juniorEl = document.getElementById("junior-count");
         if (adultEl)  { adultEl.textContent  = bookingState.adultCount; }
@@ -172,9 +179,16 @@
         var cards = document.querySelectorAll(".booking-pkg-card");
         for (var i = 0; i < cards.length; i++) {
             var card = cards[i];
-            var pkg  = card.getAttribute("data-pkg");                                                           // each card has data-pkg="1_ride" etc
-            var sel  = card.querySelector(".pkg-selected");                                                     // shown when selected
-            var unsel = card.querySelector(".pkg-select");                                                      // shown when not selected
+
+            // each card has data-pkg="1_ride" etc
+            var pkg  = card.getAttribute("data-pkg");
+
+            // shown when selected
+            var sel  = card.querySelector(".pkg-selected");
+
+            // shown when not selected
+            var unsel = card.querySelector(".pkg-select");
+
             if (pkg === bookingState.packageId) {
                 card.classList.add("border-ak-purple");
                 card.classList.remove("border-ak-border");
@@ -188,7 +202,7 @@
             }
         }
 
-        // Show/hide the +/- extra rides counter only when the "Custom" (4_plus) package is selected
+        // show/hide the +/- extra rides counter only when the "Custom" (4_plus) package is selected
         var extraControls = document.getElementById("extra-rides-controls");
         if (extraControls) {
             if (bookingState.packageId === "4_plus") {
@@ -201,37 +215,51 @@
         var extraCountEl = document.getElementById("extra-count");
         if (extraCountEl) { extraCountEl.textContent = bookingState.extraRides; }
 
-        fnUpdateExtraRidesDisplay();                                                                            // refreshes "Xx sessions" + per-person price on the custom card
-        fnUpdateProceedButton();                                                                                // enables/disables the proceed button based on whether step 1 is valid
+        // refreshes "x sessions" + per-person price on the custom card
+        fnUpdateExtraRidesDisplay();
+
+        // enables/disables the proceed button based on whether step 1 is valid
+        fnUpdateProceedButton();
     }
 
-    function fnUpdateExtraRidesDisplay() {                                                                      // updates the "3 + extra = total rides" label and price on the Custom card
+    // updates the "3 + extra = total rides" label and price on the Custom card
+    function fnUpdateExtraRidesDisplay() {
         var display  = document.getElementById("extra-rides-display");
         var priceEl  = document.getElementById("custom-price-display");
-        var rides = 3 + bookingState.extraRides;                                                                // custom package = 3 base rides + N extras
+        var rides = 3 + bookingState.extraRides;
         if (display) { display.textContent = rides; }
         if (priceEl) {
-            var perPerson = (8500 + bookingState.extraRides * 2000) / 100;                                      // same formula as fnCalculateTotal / fn_calculate_total
+            var perPerson = (8500 + bookingState.extraRides * 2000) / 100;
             priceEl.innerHTML = "$" + perPerson.toFixed(2) + '<span class="text-ak-muted text-xs font-normal"> /person</span>';
         }
     }
 
-    function fnUpdateProceedButton() {                                                                          // disables "Proceed" until the current step has the minimum required data
+    // disables "Proceed" until the current step has the minimum required data
+    function fnUpdateProceedButton() {
         var btn = document.getElementById("btn-proceed");
         if (!btn) { return; }
         if (bookingState.step === 1) {
             var drivers = bookingState.adultCount + bookingState.juniorCount;
-            btn.disabled = drivers < 1;                                                                         // need at least 1 driver before proceeding
+
+            // need at least 1 driver before proceeding
+            btn.disabled = drivers < 1;
+
         } else if (bookingState.step === 2) {
-            btn.disabled = bookingState.date === null || bookingState.timeSlot === null;                        // need both a date and a slot before proceeding
+            // need both a date and a slot before proceeding
+            btn.disabled = bookingState.date === null || bookingState.timeSlot === null;
+
         } else {
-            btn.disabled = false;                                                                               // step 4 (confirm) is always enabled, the click handler does the work
+            // step 4 (confirm) is always enabled, the click handler does the work
+            btn.disabled = false;
         }
     }
 
-    function fnDayOrdinal(n) {                                                                                  // converts a day number into 1st/2nd/3rd/4th etc
+    // converts a day number into 1st / 2nd / 3rd / 4th etc
+    function fnDayOrdinal(n) {
         var lastTwo = n % 100;
-        if (lastTwo >= 11 && lastTwo <= 13) { return "th"; }                                                    // 11th, 12th, 13th are exceptions to the usual st/nd/rd rule
+
+        // 11th, 12th, 13th are exceptions to the usual st/nd/rd rule
+        if (lastTwo >= 11 && lastTwo <= 13) { return "th"; }
         var last = n % 10;
         if (last === 1) { return "st"; }
         if (last === 2) { return "nd"; }
@@ -239,7 +267,8 @@
         return "th";
     }
 
-    function fnFormatDateNoYear(dateString) {                                                                   // "Tuesday 26th May" - used in the calendar header to show the selected date
+    // "Tuesday 26th May" - used in the calendar header to show the selected date
+    function fnFormatDateNoYear(dateString) {
         var parts = dateString.split("-");
         var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         var days   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -248,7 +277,8 @@
         return days[d.getDay()] + " " + n + fnDayOrdinal(n) + " " + months[d.getMonth()];
     }
 
-    function fnUpdateDateDisplay(dateString) {                                                                  // shows the selected date in the calendar header (right side)
+    // shows the selected date in the calendar header (right side)
+    function fnUpdateDateDisplay(dateString) {
         var displayEl = document.getElementById("date-display");
         if (!displayEl) { return; }
         if (dateString) {
@@ -258,12 +288,13 @@
         }
     }
 
-    async function fnFetchSlots(dateString) {                                                                   // hits GET /api/bookings/slots and returns the parsed json
+    // hits GET /api/bookings/slots and returns the parsed json
+    async function fnFetchSlots(dateString) {
         var drivers = bookingState.adultCount + bookingState.juniorCount;
         if (drivers < 1) { drivers = 1; }
         var url = "/api/bookings/slots?date=" + dateString + "&total_drivers=" + drivers;
         try {
-            var response = await fetch(url, {credentials: "same-origin"});                                      // same-origin so the session cookie travels with the request
+            var response = await fetch(url, {credentials: "same-origin"});
             var json = await response.json();
             return json;
         } catch (e) {
@@ -271,80 +302,103 @@
         }
     }
 
-    function fnRenderSkeletonSlots(count) {                                                                     // renders grey placeholder buttons so the slot card holds its size while loading
+    // renders grey placeholder buttons so the slot card holds its size while loading
+    function fnRenderSkeletonSlots(count) {
         var containerEl = document.getElementById("slots-container");
         if (!containerEl) { return; }
         containerEl.innerHTML = "";
         var rows = Math.ceil(count / 2);
-        containerEl.style.gridAutoFlow   = "column";                                                            // match the real layout so the swap-in is seamless
+
+        // match the real layout so the swap-in is seamless
+        containerEl.style.gridAutoFlow     = "column";
         containerEl.style.gridTemplateRows = "repeat(" + rows + ", auto)";
         for (var i = 0; i < count; i++) {
             var skel = document.createElement("div");
             skel.className = "w-full rounded-xl border-2 border-ak-border bg-ak-card animate-pulse";
-            skel.style.height = "52px";                                                                         // matches a real slot button's outer height (py-3 + line)
+
+            // matches a real slot button's outer height (py-3 + line)
+            skel.style.height = "52px";
             containerEl.appendChild(skel);
         }
     }
 
-    function fnRenderSlots(slotData) {                                                                          // takes the result from fnFetchSlots and paints the slots grid
-        var blockedEl  = document.getElementById("slots-blocked");
+    // takes the result from fnFetchSlots and paints the slots grid
+    function fnRenderSlots(slotData) {
+        var blockedEl   = document.getElementById("slots-blocked");
         var containerEl = document.getElementById("slots-container");
 
-        if (blockedEl)  { blockedEl.classList.add("hidden"); }
+        if (blockedEl)    { blockedEl.classList.add("hidden"); }
         if (!containerEl) { return; }
 
-        if (!slotData) {                                                                                        // network or api failure
+        // network or api failure
+        if (!slotData) {
             containerEl.innerHTML = '<p class="text-red-400 text-sm" style="grid-column: 1 / -1;">Could not load times. Please try again.</p>';
-            containerEl.style.gridAutoFlow   = "row";
+            containerEl.style.gridAutoFlow     = "row";
             containerEl.style.gridTemplateRows = "";
             return;
         }
 
-        if (slotData.blocked) {                                                                                 // entire day is blocked (public holiday, private event etc)
+        // entire day is blocked (public holiday, private event etc)
+        if (slotData.blocked) {
             var reasonEl = document.getElementById("slots-blocked-reason");
             var reason = slotData.reason;
             if (!reason) { reason = "This date is not available for bookings."; }
-            if (reasonEl) { reasonEl.textContent = reason; }
+            if (reasonEl)  { reasonEl.textContent = reason; }
             if (blockedEl) { blockedEl.classList.remove("hidden"); }
-            containerEl.innerHTML = "";                                                                         // clear so the card collapses to just the blocked notice
-            containerEl.style.gridAutoFlow   = "row";
+
+            // clear so the card collapses to just the blocked notice
+            containerEl.innerHTML = "";
+            containerEl.style.gridAutoFlow     = "row";
             containerEl.style.gridTemplateRows = "";
             return;
         }
 
         var slots = slotData.slots;
-        if (!slots || slots.length === 0) {                                                                     // shouldnt normally happen but defend against it
+
+        // shouldnt normally happen but defend against it
+        if (!slots || slots.length === 0) {
             containerEl.innerHTML = '<p class="text-ak-muted text-sm" style="grid-column: 1 / -1;">No time slots available for this date.</p>';
-            containerEl.style.gridAutoFlow   = "row";
+            containerEl.style.gridAutoFlow     = "row";
             containerEl.style.gridTemplateRows = "";
             return;
         }
 
-        containerEl.innerHTML = "";                                                                             // clear old slot buttons before painting new ones
+        // clear old slot buttons before painting new ones
+        containerEl.innerHTML = "";
 
-        var todayIsoForSlots = fnFormatDateISO(fnGetTodayDate());                                                // mark hours already past on todays date as unavailable
-        var isTodaySelected = (bookingState.date === todayIsoForSlots);
-        var nowForSlots = new Date();
+        // mark hours already past on today's date as unavailable
+        var todayIsoForSlots = fnFormatDateISO(fnGetTodayDate());
+        var isTodaySelected  = (bookingState.date === todayIsoForSlots);
+        var nowForSlots      = new Date();
 
         for (var i = 0; i < slots.length; i++) {
             var slot = slots[i];
-            if (isTodaySelected) {                                                                              // override status if the hour has already started today
+
+            // override status if the hour has already started today
+            if (isTodaySelected) {
                 var dateParts = bookingState.date.split("-");
                 var slotStart = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10), slot.hour, 0, 0);
                 if (slotStart <= nowForSlots) {
                     slot.status = "past";
                 }
             }
-            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked" && slot.status !== "past";    // these statuses are "click does nothing"
-            var isSelected  = bookingState.timeSlot === slot.hour;                                              // highlight the previously-selected slot if user already picked one
+
+            // these statuses mean "click does nothing"
+            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked" && slot.status !== "past";
+
+            // highlight the previously-selected slot if the user already picked one
+            var isSelected = bookingState.timeSlot === slot.hour;
 
             var btn = document.createElement("button");
             btn.type = "button";
-            btn.setAttribute("data-hour", slot.hour);                                                           // we read this on click to update bookingState.timeSlot
-            btn.setAttribute("data-status", slot.status);                                                       // and this to know if the click should do anything
 
-            var borderClass  = isSelected ? "border-ak-purple" : "border-ak-border";                            // purple border = selected
-            var cursorClass  = isAvailable ? "cursor-pointer hover:border-ak-purple" : "cursor-not-allowed opacity-60";
+            // we read these on click to update bookingState.timeSlot and decide if the click should do anything
+            btn.setAttribute("data-hour",   slot.hour);
+            btn.setAttribute("data-status", slot.status);
+
+            // purple border = selected
+            var borderClass = isSelected ? "border-ak-purple" : "border-ak-border";
+            var cursorClass = isAvailable ? "cursor-pointer hover:border-ak-purple" : "cursor-not-allowed opacity-60";
 
             btn.className = "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 bg-ak-card transition-all " + borderClass + " " + cursorClass;
             btn.disabled  = !isAvailable;
@@ -364,56 +418,71 @@
             containerEl.appendChild(btn);
         }
 
-        var rowCount = Math.ceil(slots.length / 2);                                                             // column-major flow - first half fills col 1 top-to-bottom, second half col 2
-        containerEl.style.gridAutoFlow   = "column";
+        // column-major flow - first half fills col 1 top-to-bottom, second half col 2
+        var rowCount = Math.ceil(slots.length / 2);
+        containerEl.style.gridAutoFlow     = "column";
         containerEl.style.gridTemplateRows = "repeat(" + rowCount + ", auto)";
     }
 
-    function fnOnSlotSelect(hour) {                                                                             // user clicked a slot, update state and re-style the buttons
+    // user clicked a slot - update state and re-style the buttons
+    function fnOnSlotSelect(hour) {
         bookingState.timeSlot = hour;
         var buttons = document.querySelectorAll("#slots-container button");
         for (var i = 0; i < buttons.length; i++) {
-            var btn = buttons[i];
-            var btnHour = parseInt(btn.getAttribute("data-hour"), 10);
-            var status  = btn.getAttribute("data-status");
+            var btn      = buttons[i];
+            var btnHour  = parseInt(btn.getAttribute("data-hour"), 10);
+            var status   = btn.getAttribute("data-status");
             var available = status !== "booked_out" && status !== "blocked";
             if (btnHour === hour) {
                 btn.classList.add("border-ak-purple");
                 btn.classList.remove("border-ak-border");
-            } else if (available) {                                                                             // dont touch unavailable buttons, keep them looking disabled
+            } else if (available) {
+                // dont touch unavailable buttons, keep them looking disabled
                 btn.classList.remove("border-ak-purple");
                 btn.classList.add("border-ak-border");
             }
         }
-        fnUpdateProceedButton();                                                                                // proceed button needs to re-evaluate now that we have a slot
-        fnSaveState();                                                                                          // persist in case of refresh / login redirect
+
+        // proceed button needs to re-evaluate now that we have a slot
+        fnUpdateProceedButton();
+
+        // persist in case of refresh / login redirect
+        fnSaveState();
     }
 
-    var BOOKING_WINDOW_DAYS = 90;                                                                               // how far ahead users can book - ~3 months
-    var calendarMonthOffset = 0;                                                                                // 0 = today's month, 1 = next month, etc
+    // how far ahead users can book - ~3 months
+    var BOOKING_WINDOW_DAYS = 90;
 
-    function fnGetTodayDate() {                                                                                 // local-time today at midnight, used everywhere we compare dates
+    // 0 = today's month, 1 = next month, etc
+    var calendarMonthOffset = 0;
+
+    // local-time today at midnight, used everywhere we compare dates
+    function fnGetTodayDate() {
         var d = new Date();
         return new Date(d.getFullYear(), d.getMonth(), d.getDate());
     }
 
-    function fnGetMaxBookingDate() {                                                                            // last allowed booking date (today + window)
+    // last allowed booking date (today + window)
+    function fnGetMaxBookingDate() {
         var d = fnGetTodayDate();
         d.setDate(d.getDate() + BOOKING_WINDOW_DAYS);
         return d;
     }
 
-    function fnFormatDateISO(d) {                                                                               // YYYY-MM-DD in local time (not UTC) so it matches what the user sees
+    // YYYY-MM-DD in local time (not UTC) so it matches what the user sees on their device
+    function fnFormatDateISO(d) {
         function fnPad(n) { return n < 10 ? "0" + n : "" + n; }
         return d.getFullYear() + "-" + fnPad(d.getMonth() + 1) + "-" + fnPad(d.getDate());
     }
 
-    function fnParseDateISO(dateString) {                                                                       // YYYY-MM-DD string -> local-time Date at midnight
+    // YYYY-MM-DD string -> local-time Date at midnight
+    function fnParseDateISO(dateString) {
         var parts = dateString.split("-");
         return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
     }
 
-    function fnRenderCalendar() {                                                                               // paints the current month into #cal-grid - called on init and on month nav
+    // paints the current month into #cal-grid - called on init and on month nav
+    function fnRenderCalendar() {
         var titleEl = document.getElementById("cal-title");
         var gridEl  = document.getElementById("cal-grid");
         var prevBtn = document.getElementById("cal-prev");
@@ -423,27 +492,38 @@
         var today   = fnGetTodayDate();
         var maxDate = fnGetMaxBookingDate();
 
-        var viewYear  = today.getFullYear();                                                                    // resolve "current month + offset" into a concrete year/month
+        // resolve "current month + offset" into a concrete year/month
+        var viewYear  = today.getFullYear();
         var viewMonth = today.getMonth() + calendarMonthOffset;
-        var firstOfMonth = new Date(viewYear, viewMonth, 1);                                                    // js normalises overflow (eg month=13 -> next year, month=1)
+
+        // js normalises overflow (eg month=13 -> next year)
+        var firstOfMonth = new Date(viewYear, viewMonth, 1);
         viewYear  = firstOfMonth.getFullYear();
         viewMonth = firstOfMonth.getMonth();
 
         var monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-        titleEl.textContent = monthNames[viewMonth];                                                             // year is shown via the selected-date display on the right, no need to duplicate
 
-        if (prevBtn) { prevBtn.disabled = (calendarMonthOffset <= 0); }                                          // cant go before todays month
+        // year is shown via the selected-date display on the right, no need to duplicate
+        titleEl.textContent = monthNames[viewMonth];
+
+        // cant go before today's month
+        if (prevBtn) { prevBtn.disabled = (calendarMonthOffset <= 0); }
         if (nextBtn) {
             var nextMonthFirst = new Date(viewYear, viewMonth + 1, 1);
-            nextBtn.disabled = (nextMonthFirst > maxDate);                                                       // hide further months once entirely past the booking window
+
+            // hide further months once entirely past the booking window
+            nextBtn.disabled = (nextMonthFirst > maxDate);
         }
 
         gridEl.innerHTML = "";
 
-        var firstDow      = new Date(viewYear, viewMonth, 1).getDay();                                           // 0 = Sunday, used to add leading blank cells
-        var daysInMonth   = new Date(viewYear, viewMonth + 1, 0).getDate();                                      // day 0 of next month = last day of this month
+        // 0 = Sunday, used to add leading blank cells so the week starts on the right column
+        var firstDow    = new Date(viewYear, viewMonth, 1).getDay();
 
-        for (var b = 0; b < firstDow; b++) {                                                                     // empty cells before day 1 so the calendar aligns to the right weekday column
+        // day 0 of next month = last day of this month
+        var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+        for (var b = 0; b < firstDow; b++) {
             var blank = document.createElement("div");
             blank.className = "h-9";
             gridEl.appendChild(blank);
@@ -452,7 +532,9 @@
         for (var day = 1; day <= daysInMonth; day++) {
             var dayDate  = new Date(viewYear, viewMonth, day);
             var dayIso   = fnFormatDateISO(dayDate);
-            var disabled = (dayDate < today) || (dayDate > maxDate);                                             // past or beyond the 3-month window - admin-blocked days will plug in here later
+
+            // past or beyond the 3-month window
+            var disabled = (dayDate < today) || (dayDate > maxDate);
             var selected = (bookingState.date === dayIso);
             var isToday  = (dayDate.getTime() === today.getTime());
 
@@ -468,7 +550,8 @@
             } else if (selected) {
                 cell.className = baseClass + " bg-ak-purple text-white";
             } else if (isToday) {
-                cell.className = baseClass + " bg-ak-border text-white hover:bg-ak-purple cursor-pointer";        // today gets a subtle outline-style bg before selection
+                // today gets a subtle outline-style bg before selection
+                cell.className = baseClass + " bg-ak-border text-white hover:bg-ak-purple cursor-pointer";
             } else {
                 cell.className = baseClass + " text-white hover:bg-ak-border cursor-pointer";
             }
@@ -482,28 +565,38 @@
         }
     }
 
-    function fnSelectCalendarDate(dateIso) {                                                                    // user clicked a day cell - persist, refresh ui, reload slots
-        bookingState.date     = dateIso;
-        bookingState.timeSlot = null;                                                                           // any previously chosen slot is now meaningless on a new date
+    // user clicked a day cell - persist, refresh ui, reload slots
+    function fnSelectCalendarDate(dateIso) {
+        bookingState.date = dateIso;
+
+        // any previously chosen slot is now meaningless on a new date
+        bookingState.timeSlot = null;
         fnUpdateDateDisplay(dateIso);
-        fnRenderCalendar();                                                                                     // re-render so the new cell shows selected
+
+        // re-render so the new cell shows as selected
+        fnRenderCalendar();
         fnUpdateProceedButton();
         fnSaveState();
         fnLoadSlotsForDate(dateIso);
     }
 
-    async function fnLoadSlotsForDate(dateIso) {                                                                // fetches /api/bookings/slots and paints the result - factored out so calendar clicks can call it
+    // fetches /api/bookings/slots and paints the result
+    async function fnLoadSlotsForDate(dateIso) {
         var containerEl = document.getElementById("slots-container");
         var blockedEl   = document.getElementById("slots-blocked");
 
         if (blockedEl) { blockedEl.classList.add("hidden"); }
 
-        if (containerEl) {                                                                                      // first paint? show skeletons. otherwise leave prior buttons in place so the card doesnt collapse
+        if (containerEl) {
+            // first paint: show skeletons; otherwise leave prior buttons in place so the card doesnt collapse
             var hasPriorButtons = containerEl.querySelector("button") !== null;
             if (!hasPriorButtons) {
-                fnRenderSkeletonSlots(11);                                                                      // 11 placeholders matches the typical opening-hours range
+                // 11 placeholders matches the typical opening-hours range
+                fnRenderSkeletonSlots(11);
             }
-            containerEl.classList.add("opacity-50", "pointer-events-none");                                     // dim whatevers currently visible so the user sees its loading
+
+            // dim whatever is currently visible so the user sees it is loading
+            containerEl.classList.add("opacity-50", "pointer-events-none");
         }
 
         var result = await fnFetchSlots(dateIso);
@@ -519,29 +612,35 @@
         }
     }
 
-    function fnInitStep2() {                                                                                    // wires up the calendar widget and pre-selects today if no date is set
+    // wires up the calendar widget and pre-selects today if no date is set
+    function fnInitStep2() {
         var today    = fnGetTodayDate();
         var maxDate  = fnGetMaxBookingDate();
         var todayIso = fnFormatDateISO(today);
 
-        if (bookingState.date) {                                                                                // throw away saved dates that are outside the booking window
+        // throw away saved dates that are outside the booking window
+        if (bookingState.date) {
             var saved = fnParseDateISO(bookingState.date);
             if (saved < today || saved > maxDate) {
                 bookingState.date     = null;
                 bookingState.timeSlot = null;
             }
         }
-        if (!bookingState.date) {                                                                               // pre-select today so the user immediately sees today's slots
+
+        // pre-select today so the user immediately sees today's slots
+        if (!bookingState.date) {
             bookingState.date = todayIso;
         }
 
-        var selDate = fnParseDateISO(bookingState.date);                                                        // align the visible month to the selected date
+        // align the visible month to the selected date
+        var selDate = fnParseDateISO(bookingState.date);
         calendarMonthOffset = (selDate.getFullYear() - today.getFullYear()) * 12 + (selDate.getMonth() - today.getMonth());
 
         var prevBtn = document.getElementById("cal-prev");
         var nextBtn = document.getElementById("cal-next");
         if (prevBtn) {
-            prevBtn.onclick = function () {                                                                     // onclick reassignment is fine - fnInitStep2 runs each time step 2 is shown
+            // onclick reassignment is fine - fnInitStep2 runs each time step 2 is shown
+            prevBtn.onclick = function () {
                 if (calendarMonthOffset > 0) { calendarMonthOffset--; fnRenderCalendar(); }
             };
         }
@@ -562,108 +661,86 @@
     function fnUpdateSummary() {
         var drivers = bookingState.adultCount + bookingState.juniorCount;
         var driverStr = "";
-        if (bookingState.adultCount > 0)  { driverStr += bookingState.adultCount + " adult" + (bookingState.adultCount > 1 ? "s" : ""); }    // handles pluralization
-        if (bookingState.juniorCount > 0) {
-            if (driverStr) { driverStr += ", "; }                                                               // comma between adults & juniors when both exist
-            driverStr += bookingState.juniorCount + " junior" + (bookingState.juniorCount > 1 ? "s" : "");
-        }
 
-        var pkgData = PACKAGE_DATA[bookingState.packageId];
-        var pkgLabel = pkgData ? pkgData.label : bookingState.packageId;
-        if (bookingState.packageId === "4_plus") {
-            pkgLabel = (3 + bookingState.extraRides) + " Sessions";                                             // custom packages get a more useful label
-        }
-
-        var dateStr = bookingState.date ? fnFormatDateShort(bookingState.date) : "";
-        var timeStr = bookingState.timeSlot !== null ? fnFormatHour(bookingState.timeSlot) : "";
-
-        var el = document.getElementById("summary-date");    if (el) { el.textContent = dateStr; }
-        el = document.getElementById("summary-time");        if (el) { el.textContent = timeStr; }
-        el = document.getElementById("summary-drivers");     if (el) { el.textContent = driverStr; }
-        el = document.getElementById("summary-package");     if (el) { el.textContent = pkgLabel; }
-        el = document.getElementById("summary-total");       if (el) { el.textContent = fnFormatCents(fnCalculateTotal()); }
-    }
-
-
-    function fnUpdateConfirmation(bookingId) {                                                                  // fills in the success-screen booking details after a booking is created
-        var ref = bookingId ? bookingId.slice(-6).toUpperCase() : "";
-        var drivers = bookingState.adultCount + bookingState.juniorCount;
-        var driverStr = "";
+        // handles pluralization
         if (bookingState.adultCount > 0)  { driverStr += bookingState.adultCount + " adult" + (bookingState.adultCount > 1 ? "s" : ""); }
         if (bookingState.juniorCount > 0) {
+            // comma between adults & juniors when both are non-zero
             if (driverStr) { driverStr += ", "; }
             driverStr += bookingState.juniorCount + " junior" + (bookingState.juniorCount > 1 ? "s" : "");
         }
-        var pkgLabel = bookingState.packageId === "4_plus"
-            ? (3 + bookingState.extraRides) + " Sessions"
-            : (PACKAGE_DATA[bookingState.packageId] ? PACKAGE_DATA[bookingState.packageId].label : "");
 
-        var el = document.getElementById("conf-ref");        if (el) { el.textContent = ref; }
-        el = document.getElementById("conf-date");           if (el) { el.textContent = bookingState.date ? fnFormatDateShort(bookingState.date) : ""; }
-        el = document.getElementById("conf-time");           if (el) { el.textContent = bookingState.timeSlot !== null ? fnFormatHour(bookingState.timeSlot) : ""; }
-        el = document.getElementById("conf-drivers");        if (el) { el.textContent = driverStr; }
-        el = document.getElementById("conf-package");        if (el) { el.textContent = pkgLabel; }
-        el = document.getElementById("conf-total");          if (el) { el.textContent = fnFormatCents(fnCalculateTotal()); }
+        var pkgData  = PACKAGE_DATA[bookingState.packageId];
+        var pkgLabel = pkgData ? pkgData.label : bookingState.packageId;
+        if (bookingState.packageId === "4_plus") {
+            // custom packages get a more useful label than "Custom"
+            pkgLabel = (3 + bookingState.extraRides) + " Sessions";
+        }
+
+        var dateStr = bookingState.date     ? fnFormatDateShort(bookingState.date)         : "";
+        var timeStr = bookingState.timeSlot !== null ? fnFormatHour(bookingState.timeSlot) : "";
+
+        var el = document.getElementById("summary-date");    if (el) { el.textContent = dateStr; }
+        el     = document.getElementById("summary-time");    if (el) { el.textContent = timeStr; }
+        el     = document.getElementById("summary-drivers"); if (el) { el.textContent = driverStr; }
+        el     = document.getElementById("summary-package"); if (el) { el.textContent = pkgLabel; }
+        el     = document.getElementById("summary-total");   if (el) { el.textContent = fnFormatCents(fnCalculateTotal()); }
     }
 
-    async function fnConfirmBooking() {
+    // creates a pending booking server-side, then redirects to the Stripe-hosted checkout page
+    async function fnStartCheckout() {
         var btn     = document.getElementById("btn-proceed");
         var errorEl = document.getElementById("payment-error");
 
-        if (btn)     { btn.disabled = true; btn.textContent = "Confirming…"; }                                  // prevent double-clicks while the request is in-flight
+        // prevent double-clicks while the request is in-flight
+        if (btn)     { btn.disabled = true; btn.innerHTML = "Redirecting…"; }
         if (errorEl) { errorEl.classList.add("hidden"); }
 
+        function fnResetButton() {
+            if (btn) {
+                btn.disabled  = false;
+                btn.innerHTML = 'Proceed to Payment <img src="/static/img/right.svg" alt="" class="w-4 h-4 inline invert">';
+            }
+        }
+        function fnShowError(msg) {
+            if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove("hidden"); }
+        }
+
         var payload = {
-            date:        bookingState.date,
-            time_slot:   bookingState.timeSlot,
-            adult_count: bookingState.adultCount,
+            date:         bookingState.date,
+            time_slot:    bookingState.timeSlot,
+            adult_count:  bookingState.adultCount,
             junior_count: bookingState.juniorCount,
-            package_id:  bookingState.packageId,
-            extra_rides: bookingState.extraRides,
+            package_id:   bookingState.packageId,
+            extra_rides:  bookingState.extraRides,
         };
 
         try {
-            var response = await fetch("/api/bookings/create", {
+            var response = await fetch("/api/bookings/create-checkout-session", {
                 method:      "POST",
                 headers:     {"Content-Type": "application/json"},
-                credentials: "same-origin",                                                                     // include session cookie so @fn_login_required sees the user
+
+                // include session cookie so @fn_login_required sees the user
+                credentials: "same-origin",
                 body:        JSON.stringify(payload),
             });
             var data = await response.json();
 
-            if (data.success) {
-                bookingState.bookingId  = data.data.booking_id;                                                 // remember these so the share button on step 5 works
-                bookingState.shareToken = data.data.share_token;
-                bookingState.step       = 5;
-                fnUpdateConfirmation(data.data.booking_id);
-                fnRenderStep();
-                fnClearState();                                                                                 // state no longer needed after booking - next visit should start fresh
+            if (data.success && data.data && data.data.checkout_url) {
+                // hand off to Stripe; saved state lets a cancel/back-out return them here to retry
+                window.location.href = data.data.checkout_url;
             } else {
-                var errMsg = "Something went wrong. Please try again.";
-                if (data.error) { errMsg = data.error; }
-                if (errorEl) {
-                    errorEl.textContent = errMsg;
-                    errorEl.classList.remove("hidden");
-                }
-                if (btn) {
-                    btn.disabled     = false;
-                    btn.innerHTML    = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 inline invert">';
-                }
+                fnShowError((data && data.error) || "Something went wrong. Please try again.");
+                fnResetButton();
             }
         } catch (networkErr) {
-            if (errorEl) {
-                errorEl.textContent = "Network error. Please try again.";
-                errorEl.classList.remove("hidden");
-            }
-            if (btn) {
-                btn.disabled     = false;
-                btn.innerHTML    = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 inline invert">';
-            }
+            fnShowError("Network error. Please try again.");
+            fnResetButton();
         }
     }
 
-
-    function fnSetupBookingLoginForm() {                                                                        // wires up the inline login form shown on step 3
+    // wires up the inline login form shown on step 3
+    function fnSetupBookingLoginForm() {
         var form    = document.getElementById("booking-login-form");
         var errorEl = document.getElementById("booking-login-error");
         if (!form) { return; }
@@ -674,8 +751,8 @@
 
             var emailInput    = document.getElementById("bl-email");
             var passwordInput = document.getElementById("bl-password");
-            var email         = emailInput ? emailInput.value.trim() : "";
-            var password      = passwordInput ? passwordInput.value : "";
+            var email         = emailInput    ? emailInput.value.trim() : "";
+            var password      = passwordInput ? passwordInput.value     : "";
 
             if (!email || !password) {
                 if (errorEl) { errorEl.textContent = "Please enter your email and password."; errorEl.classList.remove("hidden"); }
@@ -705,9 +782,9 @@
         });
     }
 
-
-    function fnShowStep(stepId) {                                                                               // hides every step container, then unhides the one we want
-        var ids = ["step-1","step-2","step-3","step-4","step-5"];
+    // hides every step container, then unhides the one we want
+    function fnShowStep(stepId) {
+        var ids = ["step-1","step-2","step-3","step-4"];
         for (var i = 0; i < ids.length; i++) {
             var el = document.getElementById(ids[i]);
             if (!el) { continue; }
@@ -717,12 +794,15 @@
         if (target) { target.classList.remove("hidden"); }
     }
 
-    function fnRenderStep() {                                                                                   // central function that paints the correct step + stepper + nav buttons
+    // central function that paints the correct step + stepper + nav buttons
+    function fnRenderStep() {
         var s = bookingState.step;
 
         fnShowStep(s);
         fnUpdateStepper();
-        fnSaveState();                                                                                          // every visible step change is persisted so we survive reloads
+
+        // every visible step change is persisted so we survive reloads
+        fnSaveState();
 
         var backBtn    = document.getElementById("btn-back");
         var proceedBtn = document.getElementById("btn-proceed");
@@ -750,20 +830,19 @@
             if (proceedBtn) { proceedBtn.classList.add("hidden"); }
 
         } else if (s === 4) {
+            if (navEl)      { navEl.classList.remove("hidden"); }
             if (backBtn)    { backBtn.classList.remove("hidden"); }
             if (proceedBtn) {
                 proceedBtn.classList.remove("hidden");
-                proceedBtn.disabled = false;
-                proceedBtn.innerHTML = 'Confirm Booking <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">';
+                proceedBtn.disabled  = false;
+                proceedBtn.innerHTML = 'Proceed to Payment <img src="/static/img/right.svg" alt="" class="w-4 h-4 invert">';
             }
             fnUpdateSummary();
-
-        } else if (s === 5) {
-            if (navEl) { navEl.classList.add("hidden"); }
         }
     }
 
-    function fnProceed() {                                                                                       // proceed button
+    // proceed button handler
+    function fnProceed() {
         var s = bookingState.step;
 
         if (s === 1) {
@@ -781,67 +860,33 @@
             }
             fnRenderStep();
 
-        } else if (s === 3) {                                                                                   // step 3 has no "proceed" - its the log in
-            
+        } else if (s === 3) {
+            // step 3 has no "proceed" - it is the inline login form
 
         } else if (s === 4) {
-            fnConfirmBooking();                                                                                 // submit the booking
+            // create the pending booking and hand off to Stripe
+            fnStartCheckout();
         }
     }
 
-    function fnGoBack() {                                                                                       // back button
+    // back button handler
+    function fnGoBack() {
         var s = bookingState.step;
-        if (s === 2) { bookingState.step = 1; }
+        if (s === 2)      { bookingState.step = 1; }
         else if (s === 3) { bookingState.step = 2; }
         else if (s === 4) { bookingState.step = 2; }
         fnRenderStep();
     }
 
-    function fnSetupShareButton() {                                                                             // wires up the "Copy share link" button on the success page
-        var btn    = document.getElementById("btn-share-link");
-        var msgEl  = document.getElementById("share-copied-msg");
-        if (!btn) { return; }
-        btn.addEventListener("click", function () {
-            var token = bookingState.shareToken;
-            if (!token) { return; }
-            var url = window.location.origin + "/bookings/share/" + token;                                      // full URL so it's pasteable directly
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                // Modern async clipboard API
-                navigator.clipboard.writeText(url).then(function () {
-                    if (msgEl) { msgEl.classList.remove("hidden"); }
-                }).catch(function () {
-                    fnFallbackCopy(url, msgEl);
-                });
-            } else {
-                fnFallbackCopy(url, msgEl);
-            }
-        });
-    }
-
-    function fnFallbackCopy(text, msgEl) {                                                                      // old-school copy method
-        var ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        try {
-            document.execCommand("copy");
-            if (msgEl) { msgEl.classList.remove("hidden"); }
-        } catch (e) {}
-        document.body.removeChild(ta);
-    }
-
-
-    function fnAttachEventListeners() {                                                                         // binds all the click handlers in one place
-        var adultDec  = document.getElementById("adult-dec");
-        var adultInc  = document.getElementById("adult-inc");
-        var juniorDec = document.getElementById("junior-dec");
-        var juniorInc = document.getElementById("junior-inc");
-        var extraDec  = document.getElementById("extra-dec");
-        var extraInc  = document.getElementById("extra-inc");
-        var backBtn   = document.getElementById("btn-back");
+    // binds all the click handlers in one place
+    function fnAttachEventListeners() {
+        var adultDec   = document.getElementById("adult-dec");
+        var adultInc   = document.getElementById("adult-inc");
+        var juniorDec  = document.getElementById("junior-dec");
+        var juniorInc  = document.getElementById("junior-inc");
+        var extraDec   = document.getElementById("extra-dec");
+        var extraInc   = document.getElementById("extra-inc");
+        var backBtn    = document.getElementById("btn-back");
         var proceedBtn = document.getElementById("btn-proceed");
 
         // driver +/- buttons
@@ -849,11 +894,12 @@
         if (adultInc)  { adultInc.addEventListener("click",  function () { bookingState.adultCount++;  fnUpdateStep1UI(); fnSaveState(); }); }
         if (juniorDec) { juniorDec.addEventListener("click", function () { if (bookingState.juniorCount > 0) { bookingState.juniorCount--; fnUpdateStep1UI(); fnSaveState(); } }); }
         if (juniorInc) { juniorInc.addEventListener("click", function () { bookingState.juniorCount++; fnUpdateStep1UI(); fnSaveState(); }); }
-        // extra rides +/-
-        if (extraDec)  { extraDec.addEventListener("click",  function () { if (bookingState.extraRides > 1)  { bookingState.extraRides--;  fnUpdateStep1UI(); fnSaveState(); } }); }
-        if (extraInc)  { extraInc.addEventListener("click",  function () { bookingState.extraRides++;  fnUpdateStep1UI(); fnSaveState(); }); }
 
-        // package cards
+        // extra rides +/-
+        if (extraDec) { extraDec.addEventListener("click", function () { if (bookingState.extraRides > 1) { bookingState.extraRides--; fnUpdateStep1UI(); fnSaveState(); } }); }
+        if (extraInc) { extraInc.addEventListener("click", function () { bookingState.extraRides++; fnUpdateStep1UI(); fnSaveState(); }); }
+
+        // package cards - clicking anywhere on the card selects that package
         var pkgCards = document.querySelectorAll(".booking-pkg-card");
         for (var i = 0; i < pkgCards.length; i++) {
             (function (card) {
@@ -869,18 +915,21 @@
         if (backBtn)    { backBtn.addEventListener("click",    fnGoBack); }
         if (proceedBtn) { proceedBtn.addEventListener("click", fnProceed); }
 
-        fnSetupBookingLoginForm();                                                                              // wires up the inline step-3 login form
-        fnSetupShareButton();                                                                                   // wires up the step-5 copy-link button
+        // wires up the inline step-3 login form
+        fnSetupBookingLoginForm();
     }
 
     function fnInit() {
-        fnLoadState();                                                                                          // restore previous progress (if any) from localStorage
+        // restore previous progress (if any) from localStorage
+        fnLoadState();
 
+        // logged in mid-flow? skip the inline login step
         if (bookingState.step === 3 && BOOKING_IS_LOGGED_IN) {
             bookingState.step = 4;
         }
 
-        if (bookingState.step === 5 && !bookingState.shareToken) {
+        // any stale step from the old 5-step flow resets to a clean start
+        if (bookingState.step > 4 || bookingState.step < 1) {
             fnClearState();
         }
 

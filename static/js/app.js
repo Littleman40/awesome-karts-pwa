@@ -1,4 +1,5 @@
-if ("serviceWorker" in navigator) {                                                     // registers service worker for offline capabilities
+// registers service worker for offline capabilities
+if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
         navigator.serviceWorker
             .register("/sw.js")

@@ -42,7 +42,6 @@
 </head>
 <body class="bg-ak-bg text-white font-sans min-h-screen flex flex-col">
 
-    <!-- nav -->
     <nav class="sticky top-0 z-50 p-2">
         <div class="max-w-6xl mx-auto bg-ak-card/90 backdrop-blur-md border border-ak-border rounded-full">
             <div class="pl-6 pr-2 h-12 flex items-center justify-between">
@@ -93,7 +92,6 @@
             </div>
         </div>
 
-        <!-- mobile dropdown -->
         <div id="mobile-nav" class="hidden md:hidden max-w-6xl mx-auto mt-2 bg-ak-bg/80 backdrop-blur-md border border-ak-border rounded-2xl">
             <div class="px-6 py-3 flex flex-col gap-1">
                 <a href="/"
@@ -155,12 +153,10 @@
         })();
     </script>
 
-    <!-- content -->
     <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- footer -->
     <footer class="bg-ak-bg border-t border-ak-border">
         <div class="max-w-6xl mx-auto px-6 pt-10 pb-6">
             <div class="grid grid-cols-4 gap-8 mb-8">

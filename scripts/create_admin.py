@@ -1,18 +1,22 @@
+# our simple manual admin account creation
 import os
 import sys
 
-ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    # ensure the project root is on sys.path so 'from config import ...' works when running as a script
+# ensure the project root is on sys.path so 'from config import ...' works when running as a script
+ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))    
 if ROOT_DIRECTORY not in sys.path:
     sys.path.insert(0, ROOT_DIRECTORY)
 
-from flask import Flask                                                         # built locally just to give us an app_context for Flask-PyMongo
+from flask import Flask
 from config import Config
 from extensions import mongo
 from models.admin import fn_admin_exists, fn_create_admin
 
 
 def fn_main():
-    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()             # both come from .env via dotenv (already loaded by config.py)
+
+    # both come from .env via dotenv (already loaded by config.py)
+    admin_email = os.environ.get("ADMIN_EMAIL", "").strip().lower()             
     admin_password = os.environ.get("ADMIN_PASSWORD", "")
 
     if not admin_email:
@@ -22,7 +26,7 @@ def fn_main():
         print("ERROR: ADMIN_PASSWORD is not set in your .env file.")
         sys.exit(1)
 
-    app = Flask(__name__)                                                       # minimal app so Flask-PyMongo can attach to it
+    app = Flask(__name__)
     app.config.from_object(Config)
     mongo.init_app(app)
 

@@ -9,21 +9,24 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
 - [x] User Dashboard 
 - [x] Booking System
 - [x] Admin Management
+- [x] Payment System
+- [x] Notification System
 
-## Planned Updates
-- [ ] Payment System
-- [ ] Notification System
 
 ## Screenshots
 <img src="https://i.imgur.com/QvON7qR.png" width=400> <img src="https://i.imgur.com/LV5t8Gm.png" width=400> <img src="https://i.imgur.com/t0xUBMt.png" width=400> <img src="https://i.imgur.com/s6NG25I.png" width=400>
 
-## Tech stack (so far)
+## Tech stack
 
 - **Flask**: https://flask.palletsprojects.com/en/stable/
 - **Jinja**: https://jinja.palletsprojects.com/en/stable/
 - **Tailwind CSS**: https://tailwindcss.com/
 - **MongoDB Atlas**: https://www.mongodb.com/atlas
 - **bcrypt**: https://flask-bcrypt.readthedocs.io/en/1.0.1/
+- **Stripe**: https://stripe.com/docs
+- **SendGrid**: https://docs.sendgrid.com/
+- **APScheduler**: https://apscheduler.readthedocs.io/en/stable/
+- **Gunicorn**: https://gunicorn.org/
 
 ## Run it locally
 
@@ -33,9 +36,12 @@ This is a full stack application built as my Year 12 NSW HSC Software Engineerin
    pip install -r requirements.txt
    ```
 3. **set up MongoDB Atlas**
-4. **create a `.env` file**
-5. **run `python -m scripts.create_admin`**
-5. **run the server**
+4. **create a `.env` file from `.env.example`**
+5. **create the admin account**
+   ```bash
+   python scripts/create_admin.py
+   ```
+6. **run the server**
    ```bash
    python app.py
    ```

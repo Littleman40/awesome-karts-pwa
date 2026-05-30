@@ -1,0 +1,32 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}Booking Confirmed - Awesome Karts{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 16px 0; font-size:22px; font-weight:700; color:#111827;">Your booking is confirmed!</h1>
+<p style="margin:0 0 16px 0;">Hi {{ user.first_name }}, we'll see you at the track. Here are your booking details:</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; margin:0 0 20px 0;">
+    <tr><td style="padding:16px 20px;">
+        <p style="margin:0 0 10px 0;"><strong style="color:#111827;">Booking reference:</strong> AK-{{ ref }}</p>
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Date:</strong> {{ date_label }}</p>
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Time:</strong> {{ time_label }}</p>
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Package:</strong> {{ package_label }}</p>
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Drivers:</strong> {{ booking.total_drivers }} ({{ booking.adult_count }} adult, {{ booking.junior_count }} junior)</p>
+        <p style="margin:0;"><strong style="color:#111827;">Total paid:</strong> {{ amount_label }}</p>
+    </td></tr>
+</table>
+
+<p style="margin:0 0 8px 0; font-weight:600; color:#111827;">Before you arrive</p>
+<ul style="margin:0 0 20px 0; padding-left:20px;">
+    <li style="margin-bottom:4px;">Arrive 15 minutes early to get suited up.</li>
+    <li style="margin-bottom:4px;">Bring a photo ID.</li>
+    <li style="margin-bottom:4px;">Make sure all waivers are signed before arriving.</li>
+</ul>
+
+{% if share_url %}
+<p style="margin:0 0 8px 0;">Racing with friends? Share this link so they can add the booking to their account:</p>
+<p style="margin:0 0 20px 0;"><a href="{{ share_url }}" style="color:#A855F7; text-decoration:none; word-break:break-all;">{{ share_url }}</a></p>
+{% endif %}
+
+<p style="margin:0;">See you on the grid!</p>
+{% endblock %}

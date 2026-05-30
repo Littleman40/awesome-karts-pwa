@@ -43,21 +43,4 @@
         <div id="cust-empty" class="hidden p-6 text-ak-muted text-sm text-center">No customers match.</div>
     </div>
 </div>
-
-<!-- profile modal -->
-<div id="cust-profile-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 ak-modal-backdrop">
-    <div class="bg-ak-card border border-ak-border rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-start justify-between mb-4">
-            <div>
-                <h3 id="cust-profile-name" class="text-white font-bold text-lg">Customer Profile</h3>
-                <p id="cust-profile-email" class="text-ak-muted text-xs mt-0.5"></p>
-            </div>
-            <button type="button" data-close-profile aria-label="Close"
-                    class="inline-flex items-center justify-center w-8 h-8 rounded-full text-ak-muted hover:text-white hover:bg-ak-border transition-colors">
-                <img src="/static/img/cross.svg" alt="" class="w-4 h-4 invert">
-            </button>
-        </div>
-        <div id="cust-profile-body"></div>
-    </div>
-</div>
 {% endblock %}

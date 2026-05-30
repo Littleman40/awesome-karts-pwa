@@ -1,0 +1,20 @@
+{% extends "emails/base_email.html" %}
+{% block subject %}Booking Cancelled - Awesome Karts{% endblock %}
+
+{% block content %}
+<h1 style="margin:0 0 16px 0; font-size:22px; font-weight:700; color:#111827;">Your booking has been cancelled</h1>
+<p style="margin:0 0 16px 0;">Hi {{ user.first_name }}, the following booking has been cancelled:</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; margin:0 0 20px 0;">
+    <tr><td style="padding:16px 20px;">
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Booking reference:</strong> AK-{{ ref }}</p>
+        <p style="margin:0 0 6px 0;"><strong style="color:#111827;">Date:</strong> {{ date_label }}</p>
+        <p style="margin:0;"><strong style="color:#111827;">Time:</strong> {{ time_label }}</p>
+    </td></tr>
+</table>
+
+{% if was_paid %}
+<p style="margin:0 0 16px 0;">No refund has been issued for this cancellation.</p>
+{% endif %}
+<p style="margin:0;">If you believe this is an error, please call us{% if business.phone %} on {{ business.phone }}{% endif %}.</p>
+{% endblock %}

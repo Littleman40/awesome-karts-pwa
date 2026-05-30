@@ -1,25 +1,29 @@
+# our server sided admin authentication routes
 from flask import Blueprint, request, jsonify, session
 
 from extensions import mongo
 from models import admin as admin_model
 
+# groups admin auth routes - completely separate from /api/auth used by regular users
+admin_auth_bp = Blueprint("admin_auth", __name__, url_prefix="/api/admin/auth")
 
-admin_auth_bp = Blueprint("admin_auth", __name__, url_prefix="/api/admin/auth")     # groups admin auth routes - completely separate from /api/auth used by regular users
 
-
-def fn_ok_response(data=None, http_status=200):                                     # standard {success, data} shape used everywhere
+# standard {success, data} shape used everywhere
+def fn_ok_response(data=None, http_status=200):
     if data is None:
         data = {}
     return jsonify({"success": True, "data": data}), http_status
 
 
-def fn_error_response(error_message, http_status=400):                              # standard {success: false, error: ...} shape
+# standard {success: false, error: ...} shape
+def fn_error_response(error_message, http_status=400):
     return jsonify({"success": False, "error": error_message}), http_status
 
 
 @admin_auth_bp.route("/login", methods=["POST"])
 def fn_admin_login():
-    request_data = request.get_json(silent=True)                                    # parse json body without crashing on bad input
+    # parse json body without crashing on bad input
+    request_data = request.get_json(silent=True)
     if request_data is None:
         request_data = {}
 
@@ -32,10 +36,12 @@ def fn_admin_login():
     if plain_text_password is None:
         plain_text_password = ""
 
-    if not email_address or not plain_text_password:                                # generic message to avoid hinting which field is wrong
+    # generic message to avoid hinting which field is wrong
+    if not email_address or not plain_text_password:
         return fn_error_response("Invalid email or password.", 400)
 
-    found_admin = admin_model.fn_find_admin_by_email(mongo, email_address)          # looks ONLY in the admin collection - a regular user cannot log in here
+    # looks ONLY in the admin collection - a regular user cannot log in here
+    found_admin = admin_model.fn_find_admin_by_email(mongo, email_address)
     if not found_admin:
         return fn_error_response("Invalid email or password.", 400)
 
@@ -43,14 +49,18 @@ def fn_admin_login():
     if not admin_model.fn_verify_password(plain_text_password, stored_password_hash):
         return fn_error_response("Invalid email or password.", 400)
 
-    session.clear()                                                                 # wipe any pre-existing user_id - we never want an admin and a user session overlapping
+    # wipe any pre-existing user_id - we never want an admin and a user session overlapping
+    session.clear()
     session.permanent = True
-    session["admin_id"] = str(found_admin["_id"])                                   # separate key from user_id, fn_admin_required checks for this exact key
+
+    # separate key from user_id, fn_admin_required checks for this exact key
+    session["admin_id"] = str(found_admin["_id"])
 
     return fn_ok_response({"redirect": "/admin"})
 
 
 @admin_auth_bp.route("/logout", methods=["POST"])
 def fn_admin_logout():
-    session.pop("admin_id", None)                                                   # pop, not clear, so any unrelated flash messages stay - but admin_id is the only key we set, so this is effectively a clear
+    # pop, not clear, so any unrelated flash messages stay - but admin_id is the only key we set, so this is effectively a clear
+    session.pop("admin_id", None)
     return fn_ok_response({"redirect": "/admin/login"})
