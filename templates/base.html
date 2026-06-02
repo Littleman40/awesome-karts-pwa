@@ -43,7 +43,7 @@
 </head>
 <body class="bg-ak-bg text-white font-sans min-h-screen flex flex-col">
 
-    <nav class="sticky top-0 z-50 p-2">
+    <nav class="sticky top-0 z-50 p-2 relative">
         <div class="max-w-6xl mx-auto bg-ak-card/90 backdrop-blur-md border border-ak-border rounded-full">
             <div class="pl-6 pr-2 h-12 flex items-center justify-between">
                 <a href="/" class="text-white font-bold text-lg tracking-tight shrink-0">Awesome Karts</a>
@@ -93,7 +93,8 @@
             </div>
         </div>
 
-        <div id="mobile-nav" class="hidden md:hidden max-w-6xl mx-auto mt-2 bg-ak-bg/80 backdrop-blur-md border border-ak-border rounded-2xl">
+        <div id="mobile-nav" class="hidden md:hidden absolute left-0 right-0 top-full px-2 pt-1 z-50">
+            <div class="max-w-6xl mx-auto bg-ak-bg/80 backdrop-blur-md border border-ak-border rounded-2xl">
             <div class="px-6 py-3 flex flex-col gap-1">
                 <a href="/"
                    class="block px-3 py-2 rounded-lg text-sm transition-colors {% if request.endpoint == 'home' %}bg-ak-card text-white{% else %}text-ak-muted hover:text-white hover:bg-ak-card{% endif %}">
@@ -126,6 +127,7 @@
                         Log In / Register
                     </a>
                 {% endif %}
+            </div>
             </div>
         </div>
     </nav>
@@ -160,7 +162,7 @@
 
     <footer class="bg-ak-bg border-t border-ak-border">
         <div class="max-w-6xl mx-auto px-6 pt-10 pb-6">
-            <div class="grid grid-cols-4 gap-8 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                 <div>
                     <p class="text-white font-bold text-base mb-2">Awesome Karts</p>
                     <p class="text-ak-muted text-sm leading-relaxed">The most popular Go Kart track in Newcastle</p>
@@ -188,7 +190,7 @@
                     <ul class="space-y-2">
                         <li class="text-ak-muted text-sm">123 Raceway Drive, Newcastle</li>
                         <li class="text-ak-muted text-sm">0491 120 000</li>
-                        <li class="text-ak-muted text-sm">hello@awesomekarts.com.au</li>
+                        <li class="text-ak-muted text-sm break-all">hello@awesomekarts.com.au</li>
                     </ul>
                 </div>
             </div>

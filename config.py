@@ -25,3 +25,4 @@ class Config:
     SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
     SENDGRID_FROM_EMAIL = os.environ.get("SENDGRID_FROM_EMAIL", "noreply@awesomekarts.com.au")
     SENDGRID_FROM_NAME = os.environ.get("SENDGRID_FROM_NAME", "Awesome Karts")
+    CONTACT_TO_EMAIL = os.environ.get("CONTACT_TO_EMAIL", os.environ.get("SENDGRID_FROM_EMAIL", "noreply@awesomekarts.com.au"))

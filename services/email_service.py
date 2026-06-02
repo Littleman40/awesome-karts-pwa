@@ -273,6 +273,32 @@ def fn_send_welcome(user_doc):
     )
 
 
+# contact form enquiry
+def fn_send_contact_enquiry(name, surname, sender_email, message):
+    to_email = current_app.config.get("CONTACT_TO_EMAIL") or current_app.config.get("SENDGRID_FROM_EMAIL")
+    full_name = f"{name} {surname}".strip()
+    html_body = f"""
+    <div style="font-family:sans-serif;max-width:600px;color:#222;">
+        <h2 style="color:#A855F7;margin-bottom:4px;">New Contact Enquiry</h2>
+        <p style="margin:0 0 12px;color:#888;font-size:13px;">Submitted via the Awesome Karts contact form</p>
+        <table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
+            <tr><td style="padding:6px 12px 6px 0;font-weight:600;white-space:nowrap;">Name</td><td style="padding:6px 0;">{full_name}</td></tr>
+            <tr><td style="padding:6px 12px 6px 0;font-weight:600;white-space:nowrap;">Email</td><td style="padding:6px 0;"><a href="mailto:{sender_email}" style="color:#A855F7;">{sender_email}</a></td></tr>
+        </table>
+        <p style="font-weight:600;margin-bottom:8px;">Message:</p>
+        <blockquote style="margin:0 0 16px;padding:12px 16px;border-left:4px solid #A855F7;background:#f9f9f9;color:#333;white-space:pre-wrap;">{message}</blockquote>
+        <p style="font-size:12px;color:#888;">Reply directly to this email to respond to {full_name}.</p>
+    </div>
+    """
+    return fn_send_email(
+        to_email=to_email,
+        to_name="Awesome Karts",
+        subject=f"Contact Enquiry from {full_name}",
+        html_body=html_body,
+        email_type="contact_enquiry",
+    )
+
+
 # account deletion
 def fn_send_account_deleted(email, first_name):
     html_body = fn_render_email(

@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timedelta
 
-from flask import Flask, render_template, send_from_directory, session, redirect, request
+from flask import Flask, render_template, send_from_directory, session, redirect, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
 
@@ -145,6 +145,22 @@ def fn_create_app():
     @app.route("/contact")
     def fn_contact():
         return render_template("contact.html")
+
+    @app.route("/contact", methods=["POST"])
+    def fn_contact_submit():
+        data = request.get_json(silent=True) or {}
+        name    = (data.get("name")    or "").strip()
+        surname = (data.get("surname") or "").strip()
+        email   = (data.get("email")   or "").strip()
+        message = (data.get("message") or "").strip()
+
+        if not all([name, surname, email, message]):
+            return jsonify({"success": False, "error": "All fields are required."}), 400
+
+        ok = email_service.fn_send_contact_enquiry(name, surname, email, message)
+        if ok:
+            return jsonify({"success": True})
+        return jsonify({"success": False, "error": "Could not send your message. Please try again later."}), 500
 
     @app.route("/login")
     def fn_login():
