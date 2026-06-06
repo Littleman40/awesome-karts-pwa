@@ -119,9 +119,17 @@
                 loginNextUrl = "/dashboard";
             }
             
+            // show immediate feedback - the redirect can take a moment, so the button shouldn't look frozen
+            var loginSubmitButton = loginFormElement.querySelector("button[type=submit]");
+            var loginSubmitOriginalText = loginSubmitButton ? loginSubmitButton.textContent : "";
+            if (loginSubmitButton) {
+                loginSubmitButton.disabled = true;
+                loginSubmitButton.textContent = "Processing…";
+            }
+
             // sends email and password to server
             var loginResult = await fnPostJSON("/api/auth/login", { email: emailInputValue, password: passwordInputValue, next: loginNextUrl });
-            
+
             // if login successful
             if (loginResult.data && loginResult.data.success) {
                 var loginRedirectUrl = "/dashboard";
@@ -132,6 +140,11 @@
                 }
                 window.location.href = loginRedirectUrl;
             } else {
+                // re-enable the button so the user can correct their details and try again
+                if (loginSubmitButton) {
+                    loginSubmitButton.disabled = false;
+                    loginSubmitButton.textContent = loginSubmitOriginalText;
+                }
                 var loginErrorMessage = "Something went wrong. Please try again.";
                 if (loginResult.data && loginResult.data.error) {
                     loginErrorMessage = loginResult.data.error;
@@ -198,6 +211,14 @@
                 next: regNextUrl
             };
 
+            // show immediate feedback while the account is created and the redirect happens
+            var registerSubmitButton = registerFormElement.querySelector("button[type=submit]");
+            var registerSubmitOriginalText = registerSubmitButton ? registerSubmitButton.textContent : "";
+            if (registerSubmitButton) {
+                registerSubmitButton.disabled = true;
+                registerSubmitButton.textContent = "Processing…";
+            }
+
             // sends payload to server
             var registerResult = await fnPostJSON("/api/auth/register", registrationPayload);
             if (registerResult.data && registerResult.data.success) {
@@ -209,6 +230,11 @@
                 }
                 window.location.href = registerRedirectUrl;
             } else {
+                // re-enable the button so the user can fix the problem and resubmit
+                if (registerSubmitButton) {
+                    registerSubmitButton.disabled = false;
+                    registerSubmitButton.textContent = registerSubmitOriginalText;
+                }
                 var registerErrorMessage = "Something went wrong. Please try again.";
                 if (registerResult.data && registerResult.data.error) {
                     registerErrorMessage = registerResult.data.error;

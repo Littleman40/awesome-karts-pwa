@@ -8,6 +8,16 @@
     // localStorage key - used so we can survive a page reload after the user logs in
     var STORAGE_KEY = "ak_booking_state";
 
+    // localStorage key holding the id of a booking we reserved and sent to Stripe but haven't paid yet
+    var PENDING_BOOKING_KEY = "ak_pending_booking_id";
+
+    // the Custom package lets the user pick any session count in this range
+    var MIN_CUSTOM_SESSIONS = 1;
+    var MAX_CUSTOM_SESSIONS = 6;
+
+    // hard cap on people per booking (adults + juniors) - mirrors the per-slot capacity
+    var MAX_TOTAL_DRIVERS = 50;
+
     var PACKAGE_DATA = {
         "1_ride":  {label: "1 Session",  cents: 3750},
         "2_rides": {label: "2 Sessions", cents: 6500},
@@ -16,13 +26,14 @@
     };
 
     var bookingState = {
-        step:        1,
-        adultCount:  0,
-        juniorCount: 0,
-        packageId:   "1_ride",
-        extraRides:  1,
-        date:        null,
-        timeSlot:    null,
+        step:          1,
+        adultCount:    0,
+        juniorCount:   0,
+        packageId:     "1_ride",
+        // for the Custom package: the total number of sessions the user wants (1-6)
+        customSessions: 1,
+        date:          null,
+        timeSlot:      null,
     };
 
     function fnSaveState() {
@@ -43,8 +54,20 @@
             if (parsed.step        !== undefined) { bookingState.step        = parsed.step; }
             if (parsed.adultCount  !== undefined) { bookingState.adultCount  = parsed.adultCount; }
             if (parsed.juniorCount !== undefined) { bookingState.juniorCount = parsed.juniorCount; }
-            if (parsed.packageId   !== undefined) { bookingState.packageId   = parsed.packageId; }
-            if (parsed.extraRides  !== undefined) { bookingState.extraRides  = parsed.extraRides; }
+            if (parsed.packageId     !== undefined) { bookingState.packageId      = parsed.packageId; }
+            if (parsed.customSessions !== undefined) { bookingState.customSessions = parsed.customSessions; }
+
+            // sanitise restored driver counts: no negatives, and total within the MAX_TOTAL_DRIVERS cap
+            if (bookingState.adultCount  < 0) { bookingState.adultCount  = 0; }
+            if (bookingState.juniorCount < 0) { bookingState.juniorCount = 0; }
+            if (bookingState.adultCount > MAX_TOTAL_DRIVERS) { bookingState.adultCount = MAX_TOTAL_DRIVERS; }
+            if (bookingState.adultCount + bookingState.juniorCount > MAX_TOTAL_DRIVERS) {
+                bookingState.juniorCount = MAX_TOTAL_DRIVERS - bookingState.adultCount;
+            }
+
+            // keep a restored custom session count within the allowed 1..6 range
+            if (bookingState.customSessions < MIN_CUSTOM_SESSIONS) { bookingState.customSessions = MIN_CUSTOM_SESSIONS; }
+            if (bookingState.customSessions > MAX_CUSTOM_SESSIONS) { bookingState.customSessions = MAX_CUSTOM_SESSIONS; }
             if (parsed.date        !== undefined) { bookingState.date        = parsed.date; }
             if (parsed.timeSlot    !== undefined) { bookingState.timeSlot    = parsed.timeSlot; }
         } catch (e) {}
@@ -56,10 +79,10 @@
         bookingState.step        = 1;
         bookingState.adultCount  = 0;
         bookingState.juniorCount = 0;
-        bookingState.packageId   = "1_ride";
-        bookingState.extraRides  = 1;
-        bookingState.date        = null;
-        bookingState.timeSlot    = null;
+        bookingState.packageId      = "1_ride";
+        bookingState.customSessions = 1;
+        bookingState.date           = null;
+        bookingState.timeSlot       = null;
     }
 
     function fnFormatCents(cents) {
@@ -89,6 +112,15 @@
         return days[d.getDay()] + " " + d.getDate() + " " + months[d.getMonth()];
     }
 
+    // per-person price (cents) for a given number of sessions - matches the tiered pricing on the server
+    function fnPriceForSessions(sessions) {
+        if (sessions <= 1)  { return 3750; }
+        if (sessions === 2) { return 6500; }
+        if (sessions === 3) { return 8500; }
+        // 4+ sessions: the 3-session price plus $20 for each extra session
+        return 8500 + (sessions - 3) * 2000;
+    }
+
     // mirrors the server-side fn_calculate_total in models/booking.py
     function fnCalculateTotal() {
         var drivers = bookingState.adultCount + bookingState.juniorCount;
@@ -96,8 +128,33 @@
         if (bookingState.packageId === "1_ride")  { return drivers * 3750; }
         if (bookingState.packageId === "2_rides") { return drivers * 6500; }
         if (bookingState.packageId === "3_rides") { return drivers * 8500; }
-        if (bookingState.packageId === "4_plus")  { return drivers * (8500 + bookingState.extraRides * 2000); }
+        if (bookingState.packageId === "4_plus")  { return drivers * fnPriceForSessions(bookingState.customSessions); }
         return 0;
+    }
+
+    // total people on the booking (adults + juniors)
+    function fnTotalDrivers() {
+        return bookingState.adultCount + bookingState.juniorCount;
+    }
+
+    // how many 13-min sessions the current selection books per driver - drives how many hours the booking needs
+    function fnSessionsCount() {
+        if (bookingState.packageId === "1_ride")  { return 1; }
+        if (bookingState.packageId === "2_rides") { return 2; }
+        if (bookingState.packageId === "3_rides") { return 3; }
+        if (bookingState.packageId === "4_plus")  { return bookingState.customSessions; }
+        return 1;
+    }
+
+    function fnCheckoutPackage() {
+        if (bookingState.packageId !== "4_plus") {
+            return { package_id: bookingState.packageId, extra_rides: 0 };
+        }
+        var n = bookingState.customSessions;
+        if (n <= 3) {
+            return { package_id: ["1_ride", "2_rides", "3_rides"][n - 1], extra_rides: 0 };
+        }
+        return { package_id: "4_plus", extra_rides: n - 3 };
     }
 
     // renders the 4-bar busy meter icon - colour varies by slot status
@@ -109,6 +166,7 @@
             "booked_out":["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
             "blocked":   ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
             "past":      ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
+            "too_late":  ["#4b5563", "#4b5563", "#4b5563", "#4b5563"],
         };
         var f = fills[status];
 
@@ -130,6 +188,7 @@
         if (status === "booked_out"){ return '<span class="text-ak-muted font-semibold text-xs">BOOKED OUT</span>'; }
         if (status === "blocked")   { return '<span class="text-ak-muted font-semibold text-xs">CLOSED</span>'; }
         if (status === "past")      { return '<span class="text-ak-muted font-semibold text-xs">PAST</span>'; }
+        if (status === "too_late")  { return '<span class="text-ak-muted font-semibold text-xs">TOO LATE</span>'; }
         return '<span class="text-ak-muted font-semibold text-xs">CLOSED</span>';
     }
 
@@ -173,8 +232,9 @@
     function fnUpdateStep1UI() {
         var adultEl  = document.getElementById("adult-count");
         var juniorEl = document.getElementById("junior-count");
-        if (adultEl)  { adultEl.textContent  = bookingState.adultCount; }
-        if (juniorEl) { juniorEl.textContent  = bookingState.juniorCount; }
+
+        if (adultEl  && document.activeElement !== adultEl)  { adultEl.value  = bookingState.adultCount; }
+        if (juniorEl && document.activeElement !== juniorEl) { juniorEl.value = bookingState.juniorCount; }
 
         var cards = document.querySelectorAll(".booking-pkg-card");
         for (var i = 0; i < cards.length; i++) {
@@ -202,7 +262,7 @@
             }
         }
 
-        // show/hide the +/- extra rides counter only when the "Custom" (4_plus) package is selected
+        // show/hide the custom session counter only when the "Custom" (4_plus) package is selected
         var extraControls = document.getElementById("extra-rides-controls");
         if (extraControls) {
             if (bookingState.packageId === "4_plus") {
@@ -213,24 +273,41 @@
         }
 
         var extraCountEl = document.getElementById("extra-count");
-        if (extraCountEl) { extraCountEl.textContent = bookingState.extraRides; }
+        if (extraCountEl && document.activeElement !== extraCountEl) { extraCountEl.value = bookingState.customSessions; }
+
+        // grey out the + buttons once a cap is reached so the limit is obvious, not just silently ignored
+        fnSetButtonDisabled("adult-inc",  fnTotalDrivers() >= MAX_TOTAL_DRIVERS);
+        fnSetButtonDisabled("junior-inc", fnTotalDrivers() >= MAX_TOTAL_DRIVERS);
+        fnSetButtonDisabled("extra-inc",  bookingState.customSessions >= MAX_CUSTOM_SESSIONS);
+        fnSetButtonDisabled("extra-dec",  bookingState.customSessions <= MIN_CUSTOM_SESSIONS);
 
         // refreshes "x sessions" + per-person price on the custom card
-        fnUpdateExtraRidesDisplay();
+        fnUpdateCustomDisplay();
 
         // enables/disables the proceed button based on whether step 1 is valid
         fnUpdateProceedButton();
     }
 
-    // updates the "3 + extra = total rides" label and price on the Custom card
-    function fnUpdateExtraRidesDisplay() {
+    // disables/enables a counter button and dims it so a reached cap is visible
+    function fnSetButtonDisabled(buttonId, shouldDisable) {
+        var btn = document.getElementById(buttonId);
+        if (!btn) { return; }
+        btn.disabled = shouldDisable;
+        if (shouldDisable) {
+            btn.classList.add("opacity-40", "cursor-not-allowed");
+        } else {
+            btn.classList.remove("opacity-40", "cursor-not-allowed");
+        }
+    }
+
+    // updates the "N sessions" label and per-person price on the Custom card
+    function fnUpdateCustomDisplay() {
         var display  = document.getElementById("extra-rides-display");
         var priceEl  = document.getElementById("custom-price-display");
-        var rides = 3 + bookingState.extraRides;
-        if (display) { display.textContent = rides; }
+        if (display) { display.textContent = bookingState.customSessions; }
         if (priceEl) {
-            var perPerson = (8500 + bookingState.extraRides * 2000) / 100;
-            priceEl.innerHTML = "$" + perPerson.toFixed(2) + '<span class="text-ak-muted text-xs font-normal"> /person</span>';
+            var perPerson = fnPriceForSessions(bookingState.customSessions) / 100;
+            priceEl.innerHTML = "$" + perPerson.toFixed(2) + '<span class="text-ak-muted text-xs font-normal"> /pp</span>';
         }
     }
 
@@ -292,7 +369,9 @@
     async function fnFetchSlots(dateString) {
         var drivers = bookingState.adultCount + bookingState.juniorCount;
         if (drivers < 1) { drivers = 1; }
-        var url = "/api/bookings/slots?date=" + dateString + "&total_drivers=" + drivers;
+
+        // sessions lets the server grey out start times too close to closing for a multi-hour booking
+        var url = "/api/bookings/slots?date=" + dateString + "&total_drivers=" + drivers + "&sessions=" + fnSessionsCount();
         try {
             var response = await fetch(url, {credentials: "same-origin"});
             var json = await response.json();
@@ -384,7 +463,12 @@
             }
 
             // these statuses mean "click does nothing"
-            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked" && slot.status !== "past";
+            var isAvailable = slot.status !== "booked_out" && slot.status !== "blocked" && slot.status !== "past" && slot.status !== "too_late";
+
+            if (bookingState.timeSlot === slot.hour && !isAvailable) {
+                bookingState.timeSlot = null;
+                fnSaveState();
+            }
 
             // highlight the previously-selected slot if the user already picked one
             var isSelected = bookingState.timeSlot === slot.hour;
@@ -422,6 +506,9 @@
         var rowCount = Math.ceil(slots.length / 2);
         containerEl.style.gridAutoFlow     = "column";
         containerEl.style.gridTemplateRows = "repeat(" + rowCount + ", auto)";
+
+        // a stale selection may have been cleared above, so re-check whether we can proceed
+        fnUpdateProceedButton();
     }
 
     // user clicked a slot - update state and re-style the buttons
@@ -432,7 +519,7 @@
             var btn      = buttons[i];
             var btnHour  = parseInt(btn.getAttribute("data-hour"), 10);
             var status   = btn.getAttribute("data-status");
-            var available = status !== "booked_out" && status !== "blocked";
+            var available = status !== "booked_out" && status !== "blocked" && status !== "past" && status !== "too_late";
             if (btnHour === hour) {
                 btn.classList.add("border-ak-purple");
                 btn.classList.remove("border-ak-border");
@@ -674,7 +761,7 @@
         var pkgLabel = pkgData ? pkgData.label : bookingState.packageId;
         if (bookingState.packageId === "4_plus") {
             // custom packages get a more useful label than "Custom"
-            pkgLabel = (3 + bookingState.extraRides) + " Sessions";
+            pkgLabel = bookingState.customSessions + " Session" + (bookingState.customSessions > 1 ? "s" : "");
         }
 
         var dateStr = bookingState.date     ? fnFormatDateShort(bookingState.date)         : "";
@@ -706,13 +793,15 @@
             if (errorEl) { errorEl.textContent = msg; errorEl.classList.remove("hidden"); }
         }
 
+        // translate the Custom session count into the package_id + extra_rides the server expects
+        var checkoutPkg = fnCheckoutPackage();
         var payload = {
             date:         bookingState.date,
             time_slot:    bookingState.timeSlot,
             adult_count:  bookingState.adultCount,
             junior_count: bookingState.juniorCount,
-            package_id:   bookingState.packageId,
-            extra_rides:  bookingState.extraRides,
+            package_id:   checkoutPkg.package_id,
+            extra_rides:  checkoutPkg.extra_rides,
         };
 
         try {
@@ -727,6 +816,8 @@
             var data = await response.json();
 
             if (data.success && data.data && data.data.checkout_url) {
+                try { localStorage.setItem(PENDING_BOOKING_KEY, data.data.booking_id); } catch (e) {}
+
                 // hand off to Stripe; saved state lets a cancel/back-out return them here to retry
                 window.location.href = data.data.checkout_url;
             } else {
@@ -759,6 +850,11 @@
                 return;
             }
 
+            // immediate feedback so the button doesn't look frozen while we log in and redirect
+            var loginBtn = form.querySelector("button[type=submit]");
+            var loginBtnText = loginBtn ? loginBtn.textContent : "";
+            if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = "Processing…"; }
+
             try {
                 var response = await fetch("/api/auth/login", {
                     method:      "POST",
@@ -772,11 +868,14 @@
                     if (data.data && data.data.redirect) { redirect = data.data.redirect; }
                     window.location.href = redirect;
                 } else {
+                    // re-enable so they can retry
+                    if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = loginBtnText; }
                     var errMsg = "Invalid email or password.";
                     if (data.error) { errMsg = data.error; }
                     if (errorEl) { errorEl.textContent = errMsg; errorEl.classList.remove("hidden"); }
                 }
             } catch (netErr) {
+                if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = loginBtnText; }
                 if (errorEl) { errorEl.textContent = "Network error. Please try again."; errorEl.classList.remove("hidden"); }
             }
         });
@@ -878,26 +977,101 @@
         fnRenderStep();
     }
 
+    // lets the user type a driver count directly into the box instead of only using +/-
+    function fnWireCountInput(inputEl, stateKey) {
+        if (!inputEl) { return; }
+
+        inputEl.addEventListener("input", function () {
+            // keep only digits so letters/symbols can't poison the state
+            var digits = inputEl.value.replace(/[^0-9]/g, "");
+            var value  = digits === "" ? 0 : parseInt(digits, 10);
+            if (isNaN(value) || value < 0) { value = 0; }
+
+            // hard cap: adults + juniors combined can't exceed MAX_TOTAL_DRIVERS
+            var otherKey   = (stateKey === "adultCount") ? "juniorCount" : "adultCount";
+            var maxForThis = MAX_TOTAL_DRIVERS - bookingState[otherKey];
+            if (maxForThis < 0) { maxForThis = 0; }
+            if (value > maxForThis) {
+                value = maxForThis;
+                // reflect the cap straight back into the box so the user sees they've hit the limit
+                inputEl.value = value;
+            }
+
+            bookingState[stateKey] = value;
+
+            // don't re-render the whole step (would move the caret); just refresh what depends on the count
+            fnUpdateProceedButton();
+            fnSaveState();
+        });
+
+        // on blur, normalise the visible text (e.g. "" or "007" -> the real number)
+        inputEl.addEventListener("blur", function () {
+            inputEl.value = bookingState[stateKey];
+        });
+    }
+
+    // lets the user type the Custom session count directly
+    function fnWireSessionInput(inputEl) {
+        if (!inputEl) { return; }
+
+        inputEl.addEventListener("input", function () {
+            var digits = inputEl.value.replace(/[^0-9]/g, "");
+
+            // while mid-typing, an empty box is allowed; just don't change state until there's a number
+            if (digits === "") { return; }
+
+            var value = parseInt(digits, 10);
+            if (isNaN(value)) { return; }
+            if (value > MAX_CUSTOM_SESSIONS) {
+                value = MAX_CUSTOM_SESSIONS;
+                inputEl.value = value;     // snap back so the cap is visible
+            }
+            bookingState.customSessions = value;
+
+            // refresh the price/label and the "too late" slot logic depends on this too
+            fnUpdateCustomDisplay();
+            fnSaveState();
+        });
+
+        // on blur, enforce the minimum and normalise the visible text
+        inputEl.addEventListener("blur", function () {
+            if (bookingState.customSessions < MIN_CUSTOM_SESSIONS) { bookingState.customSessions = MIN_CUSTOM_SESSIONS; }
+            inputEl.value = bookingState.customSessions;
+            fnUpdateStep1UI();
+            fnSaveState();
+        });
+    }
+
     // binds all the click handlers in one place
     function fnAttachEventListeners() {
         var adultDec   = document.getElementById("adult-dec");
         var adultInc   = document.getElementById("adult-inc");
         var juniorDec  = document.getElementById("junior-dec");
         var juniorInc  = document.getElementById("junior-inc");
+        var adultInput = document.getElementById("adult-count");
+        var juniorInput= document.getElementById("junior-count");
         var extraDec   = document.getElementById("extra-dec");
         var extraInc   = document.getElementById("extra-inc");
+        var extraInput = document.getElementById("extra-count");
         var backBtn    = document.getElementById("btn-back");
         var proceedBtn = document.getElementById("btn-proceed");
 
-        // driver +/- buttons
+        // driver +/- buttons - the increment buttons stop once the booking hits the MAX_TOTAL_DRIVERS cap
         if (adultDec)  { adultDec.addEventListener("click",  function () { if (bookingState.adultCount > 0)  { bookingState.adultCount--;  fnUpdateStep1UI(); fnSaveState(); } }); }
-        if (adultInc)  { adultInc.addEventListener("click",  function () { bookingState.adultCount++;  fnUpdateStep1UI(); fnSaveState(); }); }
+        if (adultInc)  { adultInc.addEventListener("click",  function () { if (fnTotalDrivers() < MAX_TOTAL_DRIVERS) { bookingState.adultCount++;  fnUpdateStep1UI(); fnSaveState(); } }); }
         if (juniorDec) { juniorDec.addEventListener("click", function () { if (bookingState.juniorCount > 0) { bookingState.juniorCount--; fnUpdateStep1UI(); fnSaveState(); } }); }
-        if (juniorInc) { juniorInc.addEventListener("click", function () { bookingState.juniorCount++; fnUpdateStep1UI(); fnSaveState(); }); }
+        if (juniorInc) { juniorInc.addEventListener("click", function () { if (fnTotalDrivers() < MAX_TOTAL_DRIVERS) { bookingState.juniorCount++; fnUpdateStep1UI(); fnSaveState(); } }); }
 
-        // extra rides +/-
-        if (extraDec) { extraDec.addEventListener("click", function () { if (bookingState.extraRides > 1) { bookingState.extraRides--; fnUpdateStep1UI(); fnSaveState(); } }); }
-        if (extraInc) { extraInc.addEventListener("click", function () { bookingState.extraRides++; fnUpdateStep1UI(); fnSaveState(); }); }
+        // typing a number straight into the counter - keep state in sync without resetting the caret
+        fnWireCountInput(adultInput,  "adultCount");
+        fnWireCountInput(juniorInput, "juniorCount");
+
+        // custom session count +/- (1-6)
+        if (extraDec) { extraDec.addEventListener("click", function () { if (bookingState.customSessions > MIN_CUSTOM_SESSIONS) { bookingState.customSessions--; fnUpdateStep1UI(); fnSaveState(); } }); }
+        if (extraInc) { extraInc.addEventListener("click", function () { if (bookingState.customSessions < MAX_CUSTOM_SESSIONS) { bookingState.customSessions++; fnUpdateStep1UI(); fnSaveState(); } }); }
+
+        // let the user type the session count straight into the box (1-6)
+        fnWireSessionInput(extraInput);
 
         // package cards - clicking anywhere on the card selects that package
         var pkgCards = document.querySelectorAll(".booking-pkg-card");
@@ -919,7 +1093,24 @@
         fnSetupBookingLoginForm();
     }
 
+    function fnReleaseAbandonedCheckout() {
+        var pendingId;
+        try { pendingId = localStorage.getItem(PENDING_BOOKING_KEY); } catch (e) { pendingId = null; }
+        if (!pendingId) { return; }
+        try { localStorage.removeItem(PENDING_BOOKING_KEY); } catch (e) {}
+
+        // the endpoint only releases a still-reserved booking, so this is harmless if payment actually went through
+        try {
+            fetch("/api/bookings/" + encodeURIComponent(pendingId) + "/release", {
+                method:      "POST",
+                credentials: "same-origin",
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
     function fnInit() {
+        fnReleaseAbandonedCheckout();
+
         // restore previous progress (if any) from localStorage
         fnLoadState();
 
@@ -938,4 +1129,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", fnInit);
+
+    window.addEventListener("pageshow", function (event) {
+        if (event.persisted) {
+            fnReleaseAbandonedCheckout();
+            fnRenderStep();
+        }
+    });
 })();

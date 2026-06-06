@@ -50,7 +50,15 @@ def fn_get_slots():
     if total_drivers < 1:
         total_drivers = 1
 
-    result = booking_model.fn_get_slots_for_date(mongo, booking_date, total_drivers)
+    # how many sessions the booking is for - drives the "too late to start" check for multi-hour bookings
+    try:
+        sessions = int(request.args.get("sessions", "1"))
+    except (ValueError, TypeError):
+        sessions = 1
+    if sessions < 1:
+        sessions = 1
+
+    result = booking_model.fn_get_slots_for_date(mongo, booking_date, total_drivers, sessions)
     return fn_ok_response(result)
 
 
@@ -58,7 +66,7 @@ def fn_get_slots():
 # must be logged in
 @fn_login_required
 
-# reserves the slot as a 'pending' booking, then hands the user to Stripe Checkout to pay
+# reserves the slot as a 'reserved' booking, then hands the user to Stripe Checkout to pay
 def fn_create_checkout_session():
     # no STRIPE_SECRET_KEY set yet
     if not stripe_service.fn_is_configured():
@@ -118,6 +126,10 @@ def fn_create_checkout_session():
     if package_id == "4_plus" and extra_rides < 1:
         return fn_error_response("Please specify at least 1 extra ride for the custom package.")
 
+    # and is capped at 6 sessions total (3 base + 3 extras)
+    if package_id == "4_plus" and extra_rides > booking_model.MAX_EXTRA_RIDES:
+        return fn_error_response(f"A custom booking can have at most {3 + booking_model.MAX_EXTRA_RIDES} sessions.")
+
     booking_data = {
         "date": booking_date,
         "time_slot": time_slot,
@@ -127,8 +139,10 @@ def fn_create_checkout_session():
         "extra_rides": extra_rides,
     }
 
-    # Create the booking as 'pending' first - this atomically reserves the slot capacity so nobody can take it while the user is on the Stripe page.
-    booking_id, share_token, error = booking_model.fn_create_booking(mongo, user_id, booking_data, payment_status="pending")
+    # Create the booking as 'reserved' first - this atomically reserves the slot capacity so nobody can take it
+    # while the user is on the Stripe page. 'reserved' (not 'pending') means "held but no payment attempted yet",
+    # so these never surface on the dashboard; the webhook flips it to 'paid' once payment is confirmed.
+    booking_id, share_token, error = booking_model.fn_create_booking(mongo, user_id, booking_data, payment_status="reserved")
     
     # if model says no it could be slot full, blocked day, etc
     if error is not None:
@@ -169,8 +183,30 @@ def fn_create_checkout_session():
     }, 201)
 
 
+# called when the user abandons the Stripe page (e.g. browser Back) - frees the slot held by their reserved booking
+@bookings_bp.route("/<booking_id>/release", methods=["POST"])
+@fn_login_required
+def fn_release_reserved_booking(booking_id):
+    booking = booking_model.fn_find_booking_by_id(mongo, booking_id)
+
+    # nothing to do if it doesn't exist or already moved past the unpaid hold (paid/cancelled/refunded)
+    if booking is None or booking.get("payment_status") not in ("reserved", "pending"):
+        return fn_ok_response({"released": False})
+
+    # only let the booking's creator release it
+    try:
+        is_creator = booking.get("creator_user_id") == ObjectId(session["user_id"])
+    except Exception:
+        is_creator = False
+    if not is_creator:
+        return fn_error_response("Booking not found.", 404)
+
+    released = booking_model.fn_release_pending_booking(mongo, booking_id)
+    return fn_ok_response({"released": released})
+
+
 # the success page polls this until payment_status flips to paid
-@bookings_bp.route("/<booking_id>/status", methods=["GET"])                     
+@bookings_bp.route("/<booking_id>/status", methods=["GET"])
 def fn_get_booking_status(booking_id):
     booking = booking_model.fn_find_booking_by_id(mongo, booking_id)
     if booking is None:

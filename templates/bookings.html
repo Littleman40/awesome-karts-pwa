@@ -37,7 +37,8 @@
                         <div class="flex items-center gap-3">
                             <button id="adult-dec" type="button"
                                     class="w-8 h-8 rounded-full bg-ak-border hover:bg-ak-purple flex items-center justify-center transition-colors"><img src="/static/img/minus.svg" alt="" class="w-4 h-4 invert"></button>
-                            <span id="adult-count" class="text-white font-bold text-lg w-6 text-center">0</span>
+                            <input id="adult-count" type="text" inputmode="numeric" value="0" aria-label="Adult drivers"
+                                   class="text-white font-bold text-lg w-10 text-center bg-transparent border border-transparent hover:border-ak-border focus:border-ak-purple focus:outline-none rounded-lg py-0.5 transition-colors">
                             <button id="adult-inc" type="button"
                                     class="w-8 h-8 rounded-full bg-ak-purple hover:bg-purple-600 flex items-center justify-center transition-colors"><img src="/static/img/plus.svg" alt="" class="w-4 h-4 invert"></button>
                         </div>
@@ -47,7 +48,8 @@
                         <div class="flex items-center gap-3">
                             <button id="junior-dec" type="button"
                                     class="w-8 h-8 rounded-full bg-ak-border hover:bg-ak-purple flex items-center justify-center transition-colors"><img src="/static/img/minus.svg" alt="" class="w-4 h-4 invert"></button>
-                            <span id="junior-count" class="text-white font-bold text-lg w-6 text-center">0</span>
+                            <input id="junior-count" type="text" inputmode="numeric" value="0" aria-label="Junior drivers"
+                                   class="text-white font-bold text-lg w-10 text-center bg-transparent border border-transparent hover:border-ak-border focus:border-ak-purple focus:outline-none rounded-lg py-0.5 transition-colors">
                             <button id="junior-inc" type="button"
                                     class="w-8 h-8 rounded-full bg-ak-purple hover:bg-purple-600 flex items-center justify-center transition-colors"><img src="/static/img/plus.svg" alt="" class="w-4 h-4 invert"></button>
                         </div>
@@ -67,7 +69,7 @@
                 <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
                 <p class="text-white font-bold text-xl mb-0.5">1 Session</p>
                 <p class="text-ak-muted text-xs mb-3">1× 13 Minute Run</p>
-                <p class="text-white font-bold text-base mb-auto">$37.50</p>
+                <p class="text-white font-bold text-base mb-auto">$37.50<span class="text-ak-muted text-xs font-normal"> /pp</span></p>
                 <div class="pkg-selected mt-3 flex items-center gap-2 text-ak-purple text-sm font-medium">
                     <span class="w-4 h-4 bg-ak-purple rounded-sm flex items-center justify-center flex-shrink-0"><img src="/static/img/tick.svg" alt="" class="w-3 h-3 invert"></span>
                     <span>Selected</span>
@@ -82,7 +84,7 @@
                 <p class="text-white font-bold text-xl mb-0.5">2 Sessions</p>
                 <p class="text-ak-muted text-xs mb-3">2× 13 Minute Run</p>
                 <div class="flex items-center gap-2 mb-auto">
-                    <p class="text-white font-bold text-base">$65.00</p>
+                    <p class="text-white font-bold text-base">$65.00<span class="text-ak-muted text-xs font-normal"> /pp</span></p>
                     <span class="text-xs font-semibold bg-ak-border text-ak-muted px-1.5 py-0.5 rounded">-13%</span>
                 </div>
                 <div class="pkg-selected hidden mt-3 flex items-center gap-2 text-ak-purple text-sm font-medium">
@@ -100,7 +102,7 @@
                 <p class="text-white font-bold text-xl mb-0.5">3 Sessions</p>
                 <p class="text-ak-muted text-xs mb-3">3× 13 Minute Run</p>
                 <div class="flex items-center gap-2 mb-auto">
-                    <p class="text-white font-bold text-base">$85.00</p>
+                    <p class="text-white font-bold text-base">$85.00<span class="text-ak-muted text-xs font-normal"> /pp</span></p>
                     <span class="text-xs font-semibold bg-ak-purple text-white px-1.5 py-0.5 rounded">-24%</span>
                 </div>
                 <div class="pkg-selected hidden mt-3 flex items-center gap-2 text-ak-purple text-sm font-medium">
@@ -116,13 +118,14 @@
                 <div class="w-6 h-0.5 bg-ak-purple mb-3"></div>
                 <p class="text-white font-bold text-xl mb-0.5">Custom</p>
                 <p class="text-ak-muted text-xs mb-3"><span id="extra-rides-display">1</span>× 13 Minute Sessions</p>
-                <p class="text-white font-bold text-base mb-auto" id="custom-price-display">$105.00<span class="text-ak-muted text-xs font-normal"> /person</span></p>
+                <p class="text-white font-bold text-base mb-auto" id="custom-price-display">$37.50<span class="text-ak-muted text-xs font-normal"> /pp</span></p>
                 <div id="extra-rides-controls" class="hidden mt-2 mb-1">
-                    <p class="text-ak-hint text-xs mb-1.5">Extra rides (beyond 3)</p>
+                    <p class="text-ak-hint text-xs mb-1.5">Number of sessions (1–6)</p>
                     <div class="flex items-center gap-2">
                         <button id="extra-dec" type="button"
                                 class="w-7 h-7 rounded-full bg-ak-border hover:bg-ak-purple flex items-center justify-center transition-colors"><img src="/static/img/minus.svg" alt="" class="w-3.5 h-3.5 invert"></button>
-                        <span id="extra-count" class="text-white font-bold w-5 text-center">1</span>
+                        <input id="extra-count" type="text" inputmode="numeric" value="1" aria-label="Number of sessions"
+                               class="text-white font-bold w-10 text-center bg-transparent border border-transparent hover:border-ak-border focus:border-ak-purple focus:outline-none rounded-lg py-0.5 transition-colors">
                         <button id="extra-inc" type="button"
                                 class="w-7 h-7 rounded-full bg-ak-purple hover:bg-purple-600 flex items-center justify-center transition-colors"><img src="/static/img/plus.svg" alt="" class="w-3.5 h-3.5 invert"></button>
                     </div>

@@ -1,9 +1,6 @@
-var CACHE_NAME = "awesome-karts-v2";
+var CACHE_NAME = "awesome-karts-v3";
 
-// pre-cached so the shell works offline
 var CACHED_ASSETS = [
-    "/static/css/style.css",
-    "/static/js/app.js",
     "/static/manifest.json",
     "/static/icons/icon-192.png",
     "/static/icons/icon-512.png",

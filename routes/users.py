@@ -38,7 +38,12 @@ def fn_get_my_bookings():
     for booking_doc in all_bookings:
 
         # convert each mongo doc to json-friendly dict (also adds is_creator / is_past flags)
-        formatted_booking = booking_model.fn_format_booking_for_api(booking_doc, user_id)   
+        formatted_booking = booking_model.fn_format_booking_for_api(booking_doc, user_id)
+
+        # unpaid holds which are not real booking yet
+        if formatted_booking["payment_status"] in ("reserved", "pending"):
+            continue
+
         is_inactive = formatted_booking["payment_status"] in ("cancelled", "refunded")
 
         # cancelled/refunded (any date) and finished bookings belong in the past section

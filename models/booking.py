@@ -10,6 +10,15 @@ from models.settings import fn_get_or_create_settings, DEFAULT_OPENING_HOURS
 # max number of drivers that can book each hour - used as fallback if settings doc is missing
 MAX_CAPACITY_DEFAULT = 50
 
+# each ~13-min session means up to 3 fit in an opening hour; a booking occupies ceil(sessions / 3) hours
+SESSIONS_PER_HOUR = 3
+
+# a custom booking tops out at 6 sessions = 3 base rides + 3 extras (mirrors MAX_EXTRA_RIDES in booking.js)
+MAX_EXTRA_RIDES = 3
+
+# hard cap on people per booking (adults + juniors) - mirrors MAX_TOTAL_DRIVERS in booking.js
+MAX_DRIVERS_PER_BOOKING = 50
+
 # labels used when rendering bookings back to the user
 PACKAGE_LABELS = {
     "1_ride":  "1 Ride",
@@ -56,6 +65,27 @@ def fn_calculate_total(adult_count, junior_count, package_id, extra_rides=0):
         return None
     return total_drivers * per_person
 
+# how many 13-min sessions a package books per driver (custom = 3 base + extras)
+def fn_sessions_for_package(package_id, extra_rides=0):
+    if package_id == "1_ride":
+        return 1
+    if package_id == "2_rides":
+        return 2
+    if package_id == "3_rides":
+        return 3
+    if package_id == "4_plus":
+        return 3 + max(0, extra_rides)
+    return 1
+
+
+# how many consecutive opening hours a booking of this many sessions needs (e.g. 4 sessions -> 2 hours)
+def fn_hours_needed(sessions):
+    if sessions < 1:
+        sessions = 1
+    # ceil division without importing math
+    return (sessions + SESSIONS_PER_HOUR - 1) // SESSIONS_PER_HOUR
+
+
 # returns one of: "blocked", "booked_out", "low", "medium", "high" to the hourly cards on the booking page
 def fn_get_slot_status(booked_count, requested_drivers, max_capacity, is_blocked):
     
@@ -81,9 +111,12 @@ def fn_get_slot_status(booked_count, requested_drivers, max_capacity, is_blocked
 
 
 # builds the list of selectable time slots for a given calendar date
-def fn_get_slots_for_date(mongo, booking_date, total_drivers):
+def fn_get_slots_for_date(mongo, booking_date, total_drivers, sessions=1):
     settings = fn_get_or_create_settings(mongo)
     max_capacity = settings.get("max_capacity_per_slot", MAX_CAPACITY_DEFAULT)
+
+    # a multi-session booking spans several hours, so it can't start in the final hour(s) of the day
+    hours_needed = fn_hours_needed(sessions)
 
     # convert date to a midnight datetime, eg 00:00:00 for start of day etc
     booking_datetime = datetime.combine(booking_date, datetime.min.time())
@@ -131,6 +164,11 @@ def fn_get_slots_for_date(mongo, booking_date, total_drivers):
             booked_count = slot_record.get("booked_count", 0)
             is_slot_blocked = slot_record.get("is_blocked", False)
         status = fn_get_slot_status(booked_count, total_drivers, max_capacity, is_slot_blocked)
+
+        # not enough time before closing to fit every session of this booking - offer it as unavailable
+        if status not in ("blocked",) and hour + hours_needed > close_hour:
+            status = "too_late"
+
         result_slots.append({
             "hour": hour,
             "label": fn_format_hour_label(hour),    # human readable for the UI
@@ -210,6 +248,11 @@ def fn_create_booking(mongo, user_id_string, booking_data, payment_status="paid"
 
     # calculate total price
     total_drivers = adult_count + junior_count
+
+    # hard cap on people per booking - never trust the client to have enforced this
+    if total_drivers > MAX_DRIVERS_PER_BOOKING:
+        return None, None, f"A single booking can have at most {MAX_DRIVERS_PER_BOOKING} drivers."
+
     total_amount = fn_calculate_total(adult_count, junior_count, package_id, extra_rides)
     if total_amount is None:
         return None, None, "Invalid package."
@@ -218,11 +261,21 @@ def fn_create_booking(mongo, user_id_string, booking_data, payment_status="paid"
     max_capacity = settings.get("max_capacity_per_slot", MAX_CAPACITY_DEFAULT)
     opening_hours = settings.get("opening_hours", DEFAULT_OPENING_HOURS)
 
+    # custom bookings are capped at 6 sessions total (3 base + 3 extras) - reject tampered requests
+    if package_id == "4_plus" and extra_rides > MAX_EXTRA_RIDES:
+        return None, None, f"A custom booking can have at most {3 + MAX_EXTRA_RIDES} sessions."
+
     # check the requested hour falls within opening hours for that weekday so we protect against someone calling the api directly with a bad hour
-    day_name = booking_date.strftime("%A").lower()                                              
+    day_name = booking_date.strftime("%A").lower()
     day_hours = opening_hours.get(day_name)
     if day_hours is None or time_slot < day_hours["open"] or time_slot >= day_hours["close"]:
         return None, None, "This time slot is outside opening hours."
+
+    # a multi-session booking needs several consecutive hours, so it must start early enough to finish before closing
+    sessions = fn_sessions_for_package(package_id, extra_rides)
+    hours_needed = fn_hours_needed(sessions)
+    if time_slot + hours_needed > day_hours["close"]:
+        return None, None, "There isn't enough time before closing for this many sessions. Please pick an earlier time."
 
     # date -> midnight datetime
     booking_datetime = datetime.combine(booking_date, datetime.min.time())                      
@@ -313,7 +366,9 @@ def fn_mark_booking_paid(mongo, booking_id_string, payment_intent_id):
     except (InvalidId, TypeError):
         return None
     result = mongo.db.bookings.update_one(
-        {"_id": booking_object_id, "payment_status": "pending"},    # only flip pending to paid; ignore if already paid (duplicate webhook) or cancelled
+        # only flip an unpaid hold (reserved before payment, or pending while awaiting confirmation) to paid;
+        # ignore if already paid (duplicate webhook) or cancelled
+        {"_id": booking_object_id, "payment_status": {"$in": ["reserved", "pending"]}},
         {"$set": {"payment_status": "paid", "stripe_payment_id": payment_intent_id, "paid_at": datetime.utcnow()}},
     )
 
@@ -325,7 +380,7 @@ def fn_mark_booking_paid(mongo, booking_id_string, payment_intent_id):
     return mongo.db.bookings.find_one({"_id": booking_object_id})                               
 
 
-# deletes a still-pending booking and frees its slot - used by the cancel URL and expiry webhook
+# deletes a still-unpaid booking (reserved or pending) and frees its slot - used by the cancel/release URLs and expiry webhook
 def fn_release_pending_booking(mongo, booking_id_string):
     try:
         booking_object_id = ObjectId(booking_id_string)
@@ -333,28 +388,30 @@ def fn_release_pending_booking(mongo, booking_id_string):
         return False
     booking_doc = mongo.db.bookings.find_one({"_id": booking_object_id})
 
-     # never touch a paid/cancelled/refunded booking
-    if booking_doc is None or booking_doc.get("payment_status") != "pending":
+     # never touch a paid/cancelled/refunded booking - only an unpaid hold can be released
+    if booking_doc is None or booking_doc.get("payment_status") not in ("reserved", "pending"):
         return False
-    
-    # filter on pending so we don't race a webhook that's marking it paid
-    delete_result = mongo.db.bookings.delete_one({"_id": booking_object_id, "payment_status": "pending"})
+
+    # filter on the unpaid statuses so we don't race a webhook that's marking it paid
+    delete_result = mongo.db.bookings.delete_one(
+        {"_id": booking_object_id, "payment_status": {"$in": ["reserved", "pending"]}}
+    )
     if delete_result.deleted_count > 0:
         fn_release_slot_capacity(mongo, booking_doc)
         return True
-    
+
     # nothing deleted - it must have just become paid
-    return False                                                                                
+    return False
 
 
-# deletes bookings stuck in pending so abandoned checkouts don't hog slot capacity
+# deletes bookings stuck unpaid (reserved/pending) so abandoned checkouts don't hog slot capacity
 def fn_cleanup_abandoned_bookings(mongo, max_age_minutes=30):
     cutoff = datetime.utcnow() - timedelta(minutes=max_age_minutes)
-    abandoned = list(mongo.db.bookings.find({"payment_status": "pending", "created_at": {"$lt": cutoff}}))
+    abandoned = list(mongo.db.bookings.find({"payment_status": {"$in": ["reserved", "pending"]}, "created_at": {"$lt": cutoff}}))
     cleaned = 0
     for booking_doc in abandoned:
         # re-check status to avoid racing a webhook marking it paid right now
-        delete_result = mongo.db.bookings.delete_one({"_id": booking_doc["_id"], "payment_status": "pending"})
+        delete_result = mongo.db.bookings.delete_one({"_id": booking_doc["_id"], "payment_status": {"$in": ["reserved", "pending"]}})
         if delete_result.deleted_count > 0:
             fn_release_slot_capacity(mongo, booking_doc)
             cleaned += 1
