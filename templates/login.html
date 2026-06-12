@@ -14,8 +14,20 @@
             </div>
             <div>
                 <label for="login-password" class="block text-white text-sm font-medium mb-1.5">Password</label>
-                <input id="login-password" name="password" type="password" required autocomplete="current-password"
-                       class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                <div class="relative">
+                    <input id="login-password" name="password" type="password" required autocomplete="current-password"
+                           class="w-full bg-ak-border text-white placeholder-ak-hint text-sm rounded-lg px-4 py-2.5 pr-11 border border-ak-border focus:outline-none focus:border-ak-purple transition-colors">
+                    <button type="button" data-toggle-password="login-password" aria-label="Show password" aria-pressed="false"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-ak-hint hover:text-white transition-colors">
+                        <svg data-eye class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5S21.75 12 21.75 12s-3.75 7.5-9.75 7.5S2.25 12 2.25 12z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg data-eye-off class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.6 10.6a3 3 0 004.24 4.24M9.9 5.1A9.6 9.6 0 0112 4.5c6 0 9.75 7.5 9.75 7.5a17 17 0 01-3.36 4.35M6.2 6.2A17 17 0 002.25 12S6 19.5 12 19.5a9.6 9.6 0 003.36-.6"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <p data-form-error class="hidden text-sm text-red-400"></p>
@@ -36,4 +48,20 @@
         </form>
     </div>
 </div>
+
+<script>
+    // Wire up all show/hide password toggles on the page.
+    document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = document.getElementById(btn.getAttribute('data-toggle-password'));
+            if (!input) return;
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            btn.querySelector('[data-eye]').classList.toggle('hidden', show);
+            btn.querySelector('[data-eye-off]').classList.toggle('hidden', !show);
+        });
+    });
+</script>
 {% endblock %}
